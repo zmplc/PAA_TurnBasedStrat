@@ -1,0 +1,355 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "Unit.h"
+#include "GameField.h"
+#include "TBS_GameMode.h"
+
+// Sets default values
+AUnit::AUnit()
+{
+ 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	PrimaryActorTick.bCanEverTick = true;
+
+	UnitRoot = CreateDefaultSubobject<USceneComponent>(TEXT("UnitRoot"));
+	RootComponent = UnitRoot;
+
+	UnitMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("UnitMesh"));
+	UnitMesh->SetupAttachment(UnitRoot);
+}
+
+// Called when the game starts or when spawned
+void AUnit::BeginPlay()
+{
+	Super::BeginPlay();
+	
+}
+
+// Called every frame
+void AUnit::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+}
+
+// Called to bind functionality to input
+void AUnit::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+}
+
+// METODI MOVIMENTO
+
+// Controllo se l'unità può muoversi alla target tile usando BFS e coda di tile esplorate 
+// con controllo finale del costo totale del movimento per vedere se supera il movimento definito nelle proprietà dell'unità
+bool AUnit::CanMoveTo(int32 TargetX, int32 TargetY, const AGameField* GameField) const
+{
+	if (!GameField) return 0;
+
+	// Tile di partenza e target tile
+	FVector2D StartTile = GetCurrentGridPosition();
+	int32 StartX = FMath::RoundToInt(StartTile.X);
+	int32 StartY = FMath::RoundToInt(StartTile.Y);
+	ATile* TargetTile = GameField->GetTileAtPosition(TargetX, TargetY);
+
+	// Se tile corrente = target tile non è necessario muoversi
+	if (StartX == TargetX && StartY == TargetY) return false;
+
+	// Uso BFS per trovare il percorso più breve (quindi ho bisogno di una coda e di tenere conto delle tile visitate)
+	// Array per tenere traccia delle tile visitate
+	TArray<bool> Visited;
+	// Inizializzo l'array delle tile visitate a false e dimensione della griglia
+	Visited.Init(false, GameField->GridSizeX * GameField->GridSizeY);
+
+	// Coda per BFS per le celle da visitare
+	TQueue<FIntPoint> Queue;
+	// Coda per tenere traccia del costo di movimento totale per ogni tile
+	TMap<FIntPoint, int32> CostMap;
+
+	// Parto dalla StartTile: la inserisco nella coda, la segno visitata e costo 0
+	FIntPoint StartPoint(StartX, StartY);
+	Queue.Enqueue(StartPoint);
+	Visited[StartY * GameField->GridSizeX + StartX] = true;
+	CostMap.Add(StartPoint, 0);
+
+	// Definisco le possibili direzioni di movimento dell'unità: no obliquo quindi solo su, giù, destra e sinistra
+	TArray<FIntPoint> Directions = {
+		FIntPoint(0, 1),
+		FIntPoint(0, -1),
+		FIntPoint(1, 0),
+		FIntPoint(-1, 0)
+	};
+
+	// Inizio il ciclo BFS finché ho tile da visitare nella coda
+	while (!Queue.IsEmpty())
+	{
+		// Estraggo la tile corrente dalla coda
+		FIntPoint Current;
+		Queue.Dequeue(Current);
+
+		// Costo totale per arrivare a questa tile
+		int32 CurrentCost = CostMap[Current];
+
+		// Se sono arrivato alla target tile allora controllo se il costo totale del movimento è entro il massimo movimento definito nelle proprietà dell'unità
+		if (Current.X == TargetX && Current.Y == TargetY)
+		{
+			return CurrentCost <= MaxMovement;
+		}
+
+		// Se non sono arrivato alla target tile controllo le 4 tile adiacenti seguendo le direzioni
+		for (const FIntPoint& Dir : Directions)
+		{
+			int32 NeighborX = Current.X + Dir.X;
+			int32 NeighborY = Current.Y + Dir.Y;
+			
+			// Controllo che la tile adiacente sia dentro la griglia
+			if (NeighborX >= 0 && NeighborX < GameField->GridSizeX && NeighborY >= 0 && NeighborY < GameField->GridSizeY)
+			{
+				int32 Index = NeighborY * GameField->GridSizeX + NeighborX;
+
+				// Se la tile adiacente non è ancora stata visitata
+				if (!Visited[Index])
+				{
+					ATile* Neighbor = GameField->GetTileAtPosition(NeighborX, NeighborY);
+
+					// Se la cella è valida quindi è camminabile e non è una torre
+					if (Neighbor && Neighbor->IsWalkable() && Neighbor->GetTileType() != ETileType::TOWER)
+					{
+						// Controllo il costo di movimento per arrivare a questa tile adiacente
+						int32 MoveCost = GetMovementCost(NeighborX, NeighborY, GameField);
+
+						// Se posso muovermi in questa tile adiacente
+						if (MoveCost > 0)
+						{
+							int32 NewCost = CurrentCost + MoveCost;
+
+							// Se NewCost supera il massimo movimento dell'unità la ignoro e non continuo ad esplorare le celle adiacenti a questa
+							if (NewCost > MaxMovement) continue;
+
+							// Se NewCost è entro il massimo movimento definito nelle proprietà dell'unità allora la segno come visitata e la aggiungo alla coda
+							Visited[Index] = true;
+							CostMap.Add(FIntPoint(NeighborX, NeighborY), NewCost);
+							Queue.Enqueue(FIntPoint(NeighborX, NeighborY));
+						}
+					}
+				}
+			}
+		}
+	}
+	// Se esco dal ciclo vuol dire che non ho trovato alcun percorso valido
+	return false;
+}
+
+bool AUnit::MoveTo(int32 TargetX, int32 TargetY, AGameField* GameField)
+{
+	// Controllo se posso muovermi alla target tile
+	if (!CanMoveTo(TargetX, TargetY, GameField))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("MoveTo fallito: tile non raggiungibile"));
+		return false;
+	}
+
+	// Aggiorno la posizione corrente dell'unità
+	SetCurrentGridPosition(FVector2D(TargetX, TargetY));
+
+	ATile* TargetTile = GameField->GetTileAtPosition(TargetX, TargetY);
+	if (TargetTile)
+	{
+		FVector NewLocation = TargetTile->GetActorLocation();
+		NewLocation.Z += 50.f;
+		SetActorLocation(NewLocation);
+	}
+
+	bHasMovedThisTurn = true;
+	return true;
+}
+
+// Calcolo del costo di movimento in base alla differenza di livello tra tile corrente e target tile
+int32 AUnit::GetMovementCost(int32 TargetX, int32 TargetY, const AGameField* GameField) const
+{
+	if (!GameField) return 0;
+
+	// Tile corrente e target tile
+	FVector2D CurrPos = GetCurrentGridPosition();
+	ATile* CurrTile = GameField->GetTileAtPosition(CurrPos.X, CurrPos.Y);
+	ATile* TargetTile = GameField->GetTileAtPosition(TargetX, TargetY);
+
+	if (!TargetTile) return 0;
+
+	// Non è possibile muoversi sopra le caselle di livello 0 (acqua), Torri e dove è già presente un'altra unità
+	// anche se queste caselle si trovano nel tragitto (non si possono "saltare)
+	if (!TargetTile->IsWalkable() || TargetTile->GetTileType() == ETileType::TOWER)
+	{
+		return 0;
+	}
+
+	// L'unità può muoversi solo in orizzontale o verticale e non in diagonale
+	int32 dx = FMath::Abs<int32>(TargetX - CurrPos.X);
+	int32 dy = FMath::Abs<int32>(TargetY - CurrPos.Y);
+	if (dx + dy != 1)
+	{
+		return 0;
+	}
+
+	// Ora calcolo il costo del movimento in base al livello delle tile
+	int32 CurrLevelHeight = CurrTile->GetHeightLevel();
+	int32 TargetLevelHeight = TargetTile->GetHeightLevel();
+	int32 LevelDifference = TargetLevelHeight - CurrLevelHeight;
+
+	// Stesso livello, costo 1
+	if (LevelDifference == 0) {
+		return 1;
+	}
+	// Salita di un livello, costo 2
+	else if (LevelDifference == 1) {
+		return 2;
+	}
+	// Discesa di un livello, costo 1
+	else if (LevelDifference == -1) {
+		return 1;
+	}
+	// Altro non permesso
+	else {
+		return 0;
+	}
+}
+
+// Respawn dell'unità alla posizione iniziale
+void AUnit::RespawnAtInitialPosition()
+{
+	// TODO: devo sistemare humanplayer e fare randomplayer
+}
+
+// METODI ATTACCO
+// Calcolo del danno in base al range MinDamage e MaxDamage
+int32 AUnit::CalculateDamage() const
+{
+	// Calcolo il valore del danno randomicamente dal range MinDamage e MaxDamage (valore intero)
+	int32 Damage = FMath::RandRange(MinDamage, MaxDamage);
+
+	// Log
+	UE_LOG(LogTemp, Log, TEXT("AUnit::CalculateDamage - Danno calcolato: %d"), Damage);
+
+	return Damage;
+}
+
+// Sottrazione punti vita dopo attacco subito
+void AUnit::ApplyDamage(int32 DamageAmount)
+{
+	if (DamageAmount <= 0) return;
+
+	// Sottraggo danno inflito dalla vita corrente e faccio in modo che non scenda sotto 0
+	CurrentHealth -= DamageAmount;
+	CurrentHealth = FMath::Max(0, CurrentHealth);
+
+	// Log
+	UE_LOG(LogTemp, Log, TEXT("AUnit::TakeDamage - Danno subito: %d, Vita rimanente: %d"), DamageAmount, CurrentHealth);
+
+	// Controllo se l'unità è morta
+	if (CurrentHealth <= 0)
+	{
+		// Unità distrutta, imposto vita a 0
+		CurrentHealth = 0;
+
+		// Nascondo l'unità e disabilito collisioni
+		SetActorHiddenInGame(true);
+		SetActorEnableCollision(false);
+		
+		// Notifica GameMode per gestire respawn
+		if (ATBS_GameMode* GM = GetWorld()->GetAuthGameMode<ATBS_GameMode>())
+		{
+			GM->OnUnitDied(this);
+		}
+	}
+}
+
+bool AUnit::CanAttack(AUnit* TargetUnit, const AGameField* GameField) const
+{
+	// Controlli base sul targetunit
+	if (!TargetUnit || !TargetUnit->IsAlive() || TargetUnit->OwnerPlayerID == OwnerPlayerID)
+	{
+		UE_LOG(LogTemp, Log, TEXT("CanAttack fallito: la TargetUnit è non valida, morta o è l'unità dell'OwnerPlayerID"));
+		return false;
+	}
+
+	// Posizione attuale e targetpos
+	FVector2D MyPos = GetCurrentGridPosition();
+	FVector2D TargetPos = TargetUnit->GetCurrentGridPosition();
+
+	// Calcolo distanza tra target e tile attuale
+	int32 DistX = FMath::Abs(FMath::RoundToInt(TargetPos.X - MyPos.X));
+	int32 DistY = FMath::Abs(FMath::RoundToInt(TargetPos.Y - MyPos.Y));
+	int32 Distance = FMath::Max(DistX, DistY);
+
+	// Controllo range massimo di attacco e distanza 0 (in questo caso attacco fallito
+	if (Distance > AttackRange || Distance == 0)
+	{
+		UE_LOG(LogTemp, Log, TEXT("CanAttack fallito: distanza attacco oltre range o distanza=0"));
+		return false;
+	}
+
+	// Cerco le tile per controllare l'altezza
+	ATile* MyTile = GameField->GetTileAtPosition(FMath::RoundToInt(MyPos.X), FMath::RoundToInt(MyPos.Y));
+	ATile* TargetTile = GameField->GetTileAtPosition(FMath::RoundToInt(TargetPos.X), FMath::RoundToInt(TargetPos.Y));
+
+	if (!MyTile || !TargetTile)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("CanAttack: tile non trovata"));
+		return false;
+	}
+
+	// Prendo l'altezza dove mi trovo e della target unit
+	int32 MyLevel = MyTile->GetHeightLevel();
+	int32 TargetLevel = TargetTile->GetHeightLevel();
+
+	// Altezza target deve essere stesso livello o inferiore
+	if (TargetLevel > MyLevel)
+	{
+		UE_LOG(LogTemp, Log, TEXT("CanAttack fallito: target livello %d > mio %d"), TargetLevel, MyLevel);
+		return false;
+	}
+
+	// Regole per RANGED
+	if (AttackType == EAttackType::RANGED)
+	{
+		// Lo sniper può oltrepassare acqua
+		UE_LOG(LogTemp, Log, TEXT("CanAttack: Sniper può attaccare"));
+		return true;
+	}
+	else // Rengole per MELEE
+	{
+		// Il brawler può attaccare solo in tile adiacenti e con distanza=1
+		if (Distance != 1)
+		{
+			UE_LOG(LogTemp, Log, TEXT("CanAttack fallito: distanza oltre 1"));
+			return false;
+		}
+
+		// Check se targettile camminabile
+		if (!TargetTile->IsWalkable())
+		{
+			UE_LOG(LogTemp, Log, TEXT("CanAttack fallito: acqua"));
+			return false;
+		}
+
+		UE_LOG(LogTemp, Log, TEXT("CanAttack: Brawler può attaccare"));
+		return true;
+	}
+}
+
+bool AUnit::IsAlive() const
+{
+	// L'unità è viva se ha almeno 1 punto vita, altrimenti metto no
+	bool Alive = (CurrentHealth > 0);
+
+	return Alive;
+}
+
+// METODI TURNI
+// A fine turno resetto le due variabili di stato per permettere all'unità di muoversi e attaccare di nuovo nel prossimo turno
+void AUnit::ResetTurnStatus()
+{
+	bHasMovedThisTurn = false;
+	bHasAttackedThisTurn = false;
+}
