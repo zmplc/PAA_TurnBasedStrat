@@ -32,18 +32,19 @@ void ATBS_GameMode::BeginPlay()
 
 	if (!IsValid(HumanPawn))
 	{
-		UE_LOG(LogTemp, Error, TEXT("No player pawn of type '%s' was found."), *AHumanPlayer::StaticClass()->GetName());
+		UE_LOG(LogTemp, Error, TEXT("No player pawn of type '%s' was found"), *AHumanPlayer::StaticClass()->GetName());
 		return;
 	}
-	else
+
+	if (!GridData)
 	{
-		UE_LOG(LogTemp, Error, TEXT("GridData has not been assigned."));
-		return;
+		UE_LOG(LogTemp, Error, TEXT("GridData has not been assigned"));
 	}
 
 	if (GameFieldClass != nullptr)
 	{
 		GField = GetWorld()->SpawnActor<AGameField>(GameFieldClass);
+		UE_LOG(LogTemp, Log, TEXT("Game Field spawnato"));
 	}
 	else
 	{
