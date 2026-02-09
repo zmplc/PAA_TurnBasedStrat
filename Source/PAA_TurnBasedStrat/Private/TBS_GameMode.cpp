@@ -36,9 +36,16 @@ void ATBS_GameMode::BeginPlay()
 		return;
 	}
 
-	if (!GridData)
+	if (GridData)
 	{
-		UE_LOG(LogTemp, Error, TEXT("GridData has not been assigned"));
+		FieldSize = GridData->GridSize;
+		TileSize = GridData->TileSize;
+		CellPadding = GridData->CellPadding;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("GridData has not been assigned."));
+		return;
 	}
 
 	if (GameFieldClass != nullptr)
