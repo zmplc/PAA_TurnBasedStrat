@@ -1,4 +1,7 @@
-# PAA_TurnBasedStrat
+# Strategico a Turni 3D
+### Progetto di Esame - Progettazione e Analisi Algoritmi
+
+Questo progetto consiste nell'implementazione in Unreal Engine 5.6 di un gioco strategico a turni 3D, il progetto è sviluppato in C++ con integrazione di Blueprint.
 
 ## Risorse utilizzate
 - [Documentazione ufficiale Unreal Engine 5.6](https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-5-6-documentation?application_version=5.6)
