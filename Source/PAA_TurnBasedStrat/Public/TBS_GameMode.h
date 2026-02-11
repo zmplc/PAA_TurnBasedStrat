@@ -58,15 +58,12 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game Field")
 	AGameField* GField;
 
-	// Classi configurabili dall'editor
 	UPROPERTY(EditDefaultsOnly, Category = "Config")
 	TSubclassOf<AGameField> GameFieldClass;
 
+	// Tipo di AI
 	UPROPERTY(EditDefaultsOnly, Category = "Config")
-	TSubclassOf<AUnit> SniperClass;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Config")
-	TSubclassOf<AUnit> BrawlerClass;
+	TSubclassOf<class ARandomPlayer> AIPlayerClass;
 
 	// Proprietà per fasi partita
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game Status")

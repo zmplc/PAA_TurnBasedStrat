@@ -25,6 +25,7 @@ void AGameField::BeginPlay()
 	Super::BeginPlay();
 
 	GenerateGrid();
+	PlaceTowers();
 }
 
 // Generazione griglia con Perlin Noise
@@ -119,8 +120,6 @@ void AGameField::GenerateGrid()
 		// Dopo lo spawn delle tile controllo se la mappa è connessa ed è quindi senza isole irraggiungibili
 		if (IsMapFullyConnected())
 		{
-			// Se è tutta connessa posso piazzare le torri
-			PlaceTowers();
 			return;
 		}
 		// Altrimenti mappa non connessa, allora aumento il contatore dei tentativi e rigenero la mappa e riverifico se la mappa è interamente connessa

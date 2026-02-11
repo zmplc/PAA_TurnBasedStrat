@@ -21,6 +21,7 @@ AHumanPlayer::AHumanPlayer()
 
 	// Inizializzo valori default
 	PlayerID = -1;
+    ClassToSpawn = nullptr;
 }
 
 // Called when the game starts or when spawned
@@ -49,9 +50,35 @@ void AHumanPlayer::OnPlacementTurnStart()
 {
     UE_LOG(LogTemp, Log, TEXT("HumanPlayer: Il tuo turno di piazzamento. Scegli una tile in Y = 0,1,2"));
     IsMyTurn = true;
-    GameInstance->SetTurnMessage(TEXT("Human Turn"));
 
-    // TODO
+    if (SniperClass && BrawlerClass)
+    {
+        // Alterno automaticamente le unità da spawnare: prima sniper poi brawler
+        if (!bHasPlacedSniper)
+        {
+            ClassToSpawn = SniperClass;
+            PendingUnitTypeToSpawn = EUnitType::SNIPER;
+            GameInstance->SetTurnMessage(TEXT("Piazza lo Sniper! Clicca su una tile in Y=0,1,2"));
+            UE_LOG(LogTemp, Log, TEXT("Piazza lo Sniper! Clicca su una tile in Y=0,1,2"));
+        }
+        else if (!bHasPlacedBrawler)
+        {
+            ClassToSpawn = BrawlerClass;
+            PendingUnitTypeToSpawn = EUnitType::BRAWLER;
+            GameInstance->SetTurnMessage(TEXT("Piazza il Brawler! Clicca su una tile in Y=0,1,2"));
+            UE_LOG(LogTemp, Log, TEXT("Piazza il Brawler! Clicca su una tile in Y=0,1,2"));
+        }
+        else
+        {
+            GameInstance->SetTurnMessage(TEXT("Piazzamento iniziale completato!"));
+            UE_LOG(LogTemp, Log, TEXT("Piazzamento completato per HumanPlayer"));
+        }
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("SniperClass o BrawlerClass non assegnate in BP_HumanPlayer"));
+        GameInstance->SetTurnMessage(TEXT("Error: Classi unità non assegnate"));
+    }
 }
 
 void AHumanPlayer::OnTurnStart()
@@ -127,34 +154,51 @@ void AHumanPlayer::OnClick()
         // Fase piazzamento iniziale se è il mio turno e bPlacementPhase è true
         if (IsMyTurn && GM->bPlacementPhase)
         {
-            // Controllo se sono in zona piazzamento humanplayer (Y=0,1,2) e camminabile
             if (TileY >= 0 && TileY <= 2 && HitTile->IsWalkable())
             {
                 UE_LOG(LogTemp, Log, TEXT("Tile valida per piazzamento"));
 
-                // Spawn unità scelta (uso Sniper per prova
-                if (UnitToSpawnClass)
+                if (ClassToSpawn)
                 {
                     FVector SpawnLoc = HitTile->GetActorLocation();
-                    SpawnLoc.Z += 50.f;
+                    SpawnLoc.Z += 100.f;
+                    FRotator SpawnRotation = FRotator(0.f, 90.f, 0.f);
 
-                    AUnit* NewUnit = GetWorld()->SpawnActor<AUnit>(UnitToSpawnClass, SpawnLoc, FRotator::ZeroRotator);
+                    AUnit* NewUnit = GetWorld()->SpawnActor<AUnit>(ClassToSpawn, SpawnLoc, SpawnRotation);
                     if (NewUnit)
                     {
                         NewUnit->OwnerPlayerID = 0;
                         NewUnit->SetCurrentGridPosition(TilePos);
+                        NewUnit->InitialGridPosition = TilePos;
+
+                        // Aggiorna stato piazzamento
+                        if (PendingUnitTypeToSpawn == EUnitType::SNIPER)
+                        {
+                            bHasPlacedSniper = true;
+                            UE_LOG(LogTemp, Log, TEXT("Sniper piazzato con successo"));
+                            GameInstance->SetTurnMessage(TEXT("Sniper piazzato!"));
+                        }
+                        else if (PendingUnitTypeToSpawn == EUnitType::BRAWLER)
+                        {
+                            bHasPlacedBrawler = true;
+                            UE_LOG(LogTemp, Log, TEXT("Brawler piazzato con successo"));
+                            GameInstance->SetTurnMessage(TEXT("Brawler piazzato!"));
+                        }
+
                         UE_LOG(LogTemp, Log, TEXT("%s piazzato in (%d, %d)"), *NewUnit->GetName(), TileX, TileY);
                         GM->OnUnitPlaced(0);
                     }
                 }
                 else
                 {
-                    UE_LOG(LogTemp, Warning, TEXT("Nessuna unità selezionata per piazzamento"));
+                    UE_LOG(LogTemp, Warning, TEXT("Nessuna unità pronta per spawn (ClassToSpawn null)"));
+                    GameInstance->SetTurnMessage(TEXT("ERRORE: Nessuna unità selezionata"));
                 }
             }
             else
             {
                 UE_LOG(LogTemp, Warning, TEXT("Tile non valida per piazzamento (fuori da Y=0,1,2 o non camminabile)"));
+                GameInstance->SetTurnMessage(TEXT("Tile non valida! (Y=0-2 e camminabile)"));
             }
         }
         // Fase movimento
@@ -167,10 +211,12 @@ void AHumanPlayer::OnClick()
             {
                 SelectedUnit->MoveTo(TileX, TileY, GM->GField);
                 UE_LOG(LogTemp, Log, TEXT("Unità mossa"));
+                GameInstance->SetTurnMessage(TEXT("Unità mossa"));
             }
             else
             {
                 UE_LOG(LogTemp, Warning, TEXT("Movimento non riuscito"));
+                GameInstance->SetTurnMessage(TEXT("Movimento non riuscito"));
             }
         }
     }
@@ -178,10 +224,11 @@ void AHumanPlayer::OnClick()
     else if (AUnit* HitUnit = Cast<AUnit>(HitActor))
     {
         // Selezione unità mia
-        if (HitUnit->OwnerPlayerID == 0 && IsMyTurn)
+        if (HitUnit->OwnerPlayerID == 0 && IsMyTurn && !GM->bPlacementPhase)
         {
             SelectUnit(HitUnit);
             UE_LOG(LogTemp, Log, TEXT("Unità selezionata"));
+            GameInstance->SetTurnMessage(TEXT("Unità selezionata"));
         }
         // Attacco unità nemica (se selezionata unità mia)
         else if (SelectedUnit && HitUnit->OwnerPlayerID != 0 && IsMyTurn)
@@ -191,12 +238,15 @@ void AHumanPlayer::OnClick()
                 int32 Damage = SelectedUnit->CalculateDamage();
                 HitUnit->ApplyDamage(Damage);
                 UE_LOG(LogTemp, Log, TEXT("Attacco riuscito"));
+                GameInstance->SetTurnMessage(FString::Printf(TEXT("Attacco! Danno: %d"), Damage));
+
                 // Devo deselezionare l'unità dopo l'attacco perché per specifiche se attacco non posso effettuare movimento
                 SelectedUnit = nullptr;
             }
             else
             {
-                UE_LOG(LogTemp, Warning, TEXT("Attacco non riuscito"));
+                UE_LOG(LogTemp, Warning, TEXT("Attacco non possibile"));
+                GameInstance->SetTurnMessage(TEXT("Attacco non possibile"));
             }
         }
     }

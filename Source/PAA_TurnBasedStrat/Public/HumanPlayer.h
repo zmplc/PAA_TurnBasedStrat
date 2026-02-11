@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "PlayerInterface.h"
+#include "Unit.h"
+#include "Tile.h"
 #include "TBS_GameInstance.h"
 #include "TBS_PlayerController.h"
 #include "Camera/CameraComponent.h"
@@ -38,9 +40,29 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Unit")
 	AUnit* SelectedUnit;
 
-	// Unità da spawnare
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Placement")
-	TSubclassOf<AUnit> UnitToSpawnClass;
+	// Classe Sniper da spawnare
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Unit")
+	TSubclassOf<AUnit> SniperClass;
+
+	// Classe Brawler da spawnare
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Unit")
+	TSubclassOf<AUnit> BrawlerClass;
+
+	// Classe da spawnare
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Unit")
+	TSubclassOf<AUnit> ClassToSpawn;
+
+	// Sniper piazzato: y/n
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Unit")
+	bool bHasPlacedSniper;
+
+	// Brawler piazzato: y/n
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Unit")
+	bool bHasPlacedBrawler;
+
+	// Tipo di unità da spawnare, se NONE non c'è nessuna unità selezionata
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Unit")
+	EUnitType PendingUnitTypeToSpawn;
 
 public:	
 	// Called every frame
