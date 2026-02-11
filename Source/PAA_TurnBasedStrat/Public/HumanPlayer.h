@@ -7,15 +7,9 @@
 #include "PlayerInterface.h"
 #include "TBS_GameInstance.h"
 #include "TBS_PlayerController.h"
-#include "TBS_GameMode.h"
 #include "Camera/CameraComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "HumanPlayer.generated.h"
-
-class AUnit;
-class ATile;
-class ATBS_GameMode;
-class UTBS_GameInstance;
 
 UCLASS()
 class PAA_TURNBASEDSTRAT_API AHumanPlayer : public APawn, public IPlayerInterface
@@ -30,7 +24,7 @@ public:
 	UCameraComponent* Camera;
 
 	// game instance reference
-	UGameInstance* GameInstance;
+	UTBS_GameInstance* GameInstance;
 
 protected:
 	// Called when the game starts or when spawned

@@ -3,6 +3,7 @@
 
 #include "HumanPlayer.h"
 #include "GameField.h"
+#include "TBS_GameMode.h"
 
 // Sets default values
 AHumanPlayer::AHumanPlayer()
@@ -48,6 +49,7 @@ void AHumanPlayer::OnPlacementTurnStart()
 {
     UE_LOG(LogTemp, Log, TEXT("HumanPlayer: Il tuo turno di piazzamento. Scegli una tile in Y = 0,1,2"));
     IsMyTurn = true;
+    GameInstance->SetTurnMessage(TEXT("Human Turn"));
 
     // TODO
 }
@@ -81,10 +83,7 @@ void AHumanPlayer::SelectUnit(AUnit* Unit)
 
 void AHumanPlayer::OnWin()
 {
-	if (UTBS_GameInstance* GI = Cast<UTBS_GameInstance>(UGameplayStatics::GetGameInstance(GetWorld())))
-	{
-		GI->SetTurnMessage("Hai vinto la partita!");
-	}
+	GameInstance->SetTurnMessage("Hai vinto la partita!");
 }
 
 void AHumanPlayer::OnLose()

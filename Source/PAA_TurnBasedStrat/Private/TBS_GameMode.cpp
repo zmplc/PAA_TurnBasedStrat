@@ -9,8 +9,8 @@
 
 ATBS_GameMode::ATBS_GameMode()
 {
+	DefaultPawnClass = AHumanPlayer::StaticClass();
     PlayerControllerClass = ATBS_PlayerController::StaticClass();
-    DefaultPawnClass = ATBS_PlayerController::StaticClass();
 
 	// Imposto i valori di default
 	CurrentPlayer = 0;
@@ -33,6 +33,19 @@ void ATBS_GameMode::BeginPlay()
 	if (!IsValid(HumanPawn))
 	{
 		UE_LOG(LogTemp, Error, TEXT("No player pawn of type '%s' was found"), *AHumanPlayer::StaticClass()->GetName());
+		return;
+	}
+
+	// Inizializzo PlayerInterface per HumanPlayer
+	if (HumanPawn->Implements<UPlayerInterface>())
+	{
+		HumanPlayer.SetObject(HumanPawn);
+		HumanPlayer.SetInterface(Cast<IPlayerInterface>(HumanPawn));
+		UE_LOG(LogTemp, Log, TEXT("HumanPlayer interface inizializzata"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("HumanPlayer interface non inizializzata"));
 		return;
 	}
 
@@ -101,11 +114,8 @@ void ATBS_GameMode::StartPlacementPhase()
 
 void ATBS_GameMode::StartPlacementTurn(int32 PlayerID)
 {
-    // Imposto PlayerID con il giocatore corrente
-	PlayerID = CurrentPlayer;
-
 	// Chiamo funzione per piazzamento relativo al PlayerID
-	if (PlayerID == 0 && HumanPlayer.GetInterface()) 
+	if (PlayerID == 0 && HumanPlayer.GetInterface())
 	{
 		HumanPlayer->OnPlacementTurnStart();
 		UE_LOG(LogTemp, Log, TEXT("StartPlacementTurn: turno piazzamento per HumanPlayer"));
@@ -114,6 +124,10 @@ void ATBS_GameMode::StartPlacementTurn(int32 PlayerID)
 	{
 		RandomPlayer->OnPlacementTurnStart();
 		UE_LOG(LogTemp, Log, TEXT("StartPlacementTurn: turno piazzamento per RandomPlayer"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("StartPlacementTurn: giocatore %d non valido o interfaccia mancante"), CurrentPlayer);
 	}
 }
 
@@ -180,12 +194,12 @@ void ATBS_GameMode::TurnNextPlayer(int32 PlayerID)
 	// Chiamo OnTurnEnd
 	if (PlayerID == 0 && HumanPlayer.GetInterface())
 	{
-		HumanPlayer->OnTurnStart();
+		HumanPlayer->OnTurnEnd();
 		UE_LOG(LogTemp, Log, TEXT("EndTurn: fine turno per HumanPlayer"));
 	}
 	else if (PlayerID == 1 && RandomPlayer.GetInterface())
 	{
-		RandomPlayer->OnTurnStart();
+		RandomPlayer->OnTurnEnd();
 		UE_LOG(LogTemp, Log, TEXT("EndTurn: fine turno per RandomPlayer"));
 	}
 
