@@ -49,6 +49,29 @@ void ATBS_GameMode::BeginPlay()
 		return;
 	}
 
+	if (AIPlayerClass)
+	{
+		FVector AISpawnLocation = FVector(0, 0, -1000);
+		ARandomPlayer* AIPlayer = GetWorld()->SpawnActor<ARandomPlayer>(AIPlayerClass, AISpawnLocation, FRotator::ZeroRotator);
+
+		if (AIPlayer && AIPlayer->Implements<UPlayerInterface>())
+		{
+			RandomPlayer.SetObject(AIPlayer);
+			RandomPlayer.SetInterface(Cast<IPlayerInterface>(AIPlayer));
+			UE_LOG(LogTemp, Log, TEXT("RandomPlayer spawnato e inizializzato correttamente"));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("Errore nello spawn di RandomPlayer o interfaccia mancante"));
+			return;
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("AIPlayerClass non assegnato (devo controllare BP)"));
+		return;
+	}
+
 	if (GridData)
 	{
 		FieldSize = GridData->GridSize;

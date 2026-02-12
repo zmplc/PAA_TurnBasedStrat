@@ -18,6 +18,22 @@ void ATBS_PlayerController::ClickOnGrid()
 	}
 }
 
+void ATBS_PlayerController::SelectSniper()
+{
+	if (AHumanPlayer* HumanPawn = Cast<AHumanPlayer>(GetPawn()))
+	{
+		HumanPawn->SelectSniperForPlacement();
+	}
+}
+
+void ATBS_PlayerController::SelectBrawler()
+{
+	if (AHumanPlayer* HumanPawn = Cast<AHumanPlayer>(GetPawn()))
+	{
+		HumanPawn->SelectBrawlerForPlacement();
+	}
+}
+
 void ATBS_PlayerController::BeginPlay() 
 {
 	Super::BeginPlay();
@@ -36,5 +52,7 @@ void ATBS_PlayerController::SetupInputComponent()
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(InputComponent))
 	{
 		EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Triggered, this, &ATBS_PlayerController::ClickOnGrid);
+		EnhancedInputComponent->BindAction(SelectSniperAction, ETriggerEvent::Completed, this, &ATBS_PlayerController::SelectSniper);
+		EnhancedInputComponent->BindAction(SelectBrawlerAction, ETriggerEvent::Completed, this, &ATBS_PlayerController::SelectBrawler);
 	}
 }

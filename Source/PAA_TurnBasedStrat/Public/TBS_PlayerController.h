@@ -30,8 +30,16 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* ClickAction;
 
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* SelectSniperAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* SelectBrawlerAction;
+
 	// Funzione chiamata dal ClickAction
 	void ClickOnGrid();
+	void SelectSniper();
+	void SelectBrawler();
 		
 protected:
 	virtual void BeginPlay() override;

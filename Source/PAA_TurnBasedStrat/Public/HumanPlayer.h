@@ -74,7 +74,6 @@ public:
 	virtual void OnPlacementTurnStart() override;
 	virtual void OnTurnStart() override;
 	virtual void OnTurnEnd() override;
-	virtual void PerformTurnActions() override;
 	virtual bool PendingTurnActions() const override;
 	virtual void SelectUnit(class AUnit* Unit) override;
 	virtual void OnWin() override;
@@ -83,4 +82,12 @@ public:
 	// called on left mouse click (binding)
 	UFUNCTION()
 	void OnClick();
+
+	// Funzione per selezione Sniper
+	UFUNCTION()
+	void SelectSniperForPlacement();
+
+	// Funzione per selezione Brawler
+	UFUNCTION()
+	void SelectBrawlerForPlacement();
 };

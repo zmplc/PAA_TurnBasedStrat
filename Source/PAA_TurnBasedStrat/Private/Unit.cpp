@@ -157,7 +157,7 @@ bool AUnit::MoveTo(int32 TargetX, int32 TargetY, AGameField* GameField)
 	if (TargetTile)
 	{
 		FVector NewLocation = TargetTile->GetActorLocation();
-		NewLocation.Z += 50.f;
+		NewLocation.Z += 150.f;
 		SetActorLocation(NewLocation);
 	}
 
