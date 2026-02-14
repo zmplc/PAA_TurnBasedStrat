@@ -212,6 +212,9 @@ void ARandomPlayer::PlaceUnitAutomatically()
 		NewUnit->SetCurrentGridPosition(TilePos);
 		NewUnit->InitialGridPosition = TilePos;
 
+		NewUnit->SetActorHiddenInGame(false);
+		NewUnit->SetActorEnableCollision(true);
+
 		// Segno l'unità come piazzata
 		if (bIsSniper)
 		{
@@ -279,6 +282,6 @@ ATile* ARandomPlayer::FindRandomValidTile(AGameField* GameField)
 		return SelectedTile;
 	}
 
-	UE_LOG(LogTemp, Error, TEXT("RandomPélayer: Nessuna tile valida trovata nella zona Y=22,23,24"));
+	UE_LOG(LogTemp, Error, TEXT("RandomPlayer: Nessuna tile valida trovata nella zona Y=22,23,24"));
 	return nullptr;
 }

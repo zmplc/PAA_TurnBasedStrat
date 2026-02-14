@@ -67,6 +67,9 @@ public:
 	// Funzione update altezza tile
 	void UpdateTileHeight();
 
+	// Funzione per fare l'highlight della tile selezionata
+	void HighlightTile(bool bHighlight);
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -102,4 +105,12 @@ protected:
 	// MaterialIstanceDynamic per cambiare colore della tile
 	UPROPERTY()
 	UMaterialInstanceDynamic* DynamicMaterial;
+
+	// Colore originale tile pre-highlight
+	UPROPERTY()
+	FLinearColor OriginalColor;
+
+	// Se la tile è highlighted o no
+	UPROPERTY()
+	bool bIsHighlighted;
 };

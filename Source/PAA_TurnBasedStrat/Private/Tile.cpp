@@ -25,6 +25,8 @@ ATile::ATile()
 	HeightLevel = 1;
 	TileType = ETileType::GROUND;
 	bWalkable = true;
+	bIsHighlighted = false;
+	OriginalColor = FLinearColor::Black;
 
 }
 
@@ -152,14 +154,20 @@ void ATile::UpdateTileColor()
 		break;
 	}
 
-	DynamicMaterial->SetVectorParameterValue(TEXT("TileColor"), TileColor);
+	OriginalColor = TileColor;
+
+	// Se la tile non è highlighted allora metto il suo colore
+	if (!bIsHighlighted)
+	{
+		DynamicMaterial->SetVectorParameterValue(TEXT("TileColor"), TileColor);
+	}
 }
 
 // Update altezza tile in base al livello con moltiplicatore 50.0f
 void ATile::UpdateTileHeight()
 {
 	FVector CurrentLocation = GetActorLocation();
-	CurrentLocation.Z = HeightLevel * 50.0f;
+	CurrentLocation.Z = HeightLevel * 10.0f;
 	SetActorLocation(CurrentLocation);
 }
 
@@ -180,6 +188,24 @@ void ATile::BeginPlay()
 
 	UpdateTileColor();
 	UpdateTileHeight();
+}
+
+void ATile::HighlightTile(bool bHighlight)
+{
+	if (!DynamicMaterial) return;
+
+	bIsHighlighted = bHighlight;
+
+	if (bHighlight)
+	{
+		// Colore HumanPlayer
+		FLinearColor HighlightColor = FLinearColor(0.0f, 1.0f, 1.0f);
+		DynamicMaterial->SetVectorParameterValue(TEXT("TileColor"), HighlightColor);
+	}
+	else
+	{
+		DynamicMaterial->SetVectorParameterValue(TEXT("TileColor"), OriginalColor);
+	}
 }
 
 // Called every frame

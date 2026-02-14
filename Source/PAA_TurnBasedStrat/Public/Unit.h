@@ -119,7 +119,7 @@ public:
 	virtual bool MoveTo(int32 TargetX, int32 TargetY, class AGameField* GameField);
 
 	UFUNCTION(BlueprintCallable, Category = "Unit Movement")
-	virtual int32 GetMovementCost(int32 TargetX, int32 TargetY, const class AGameField* GameField) const;
+	virtual int32 GetMovementCost(int32 FromX, int32 FromY, int32 TargetX, int32 TargetY, const class AGameField* GameField) const;
 	
 	// Metodi per attacco
 	UFUNCTION(BlueprintCallable, Category = "Unit Combat")

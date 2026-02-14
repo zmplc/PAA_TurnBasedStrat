@@ -9,6 +9,7 @@
 #include "Tile.h"
 #include "TBS_GameInstance.h"
 #include "TBS_PlayerController.h"
+#include "EngineUtils.h"
 #include "Camera/CameraComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "HumanPlayer.generated.h"
@@ -90,4 +91,8 @@ public:
 	// Funzione per selezione Brawler
 	UFUNCTION()
 	void SelectBrawlerForPlacement();
+
+	// Funzione per controllare se tutte le unità si sono mosse, se si termino turno
+	UFUNCTION()
+	void CheckAndEndTurnIfComplete();
 };

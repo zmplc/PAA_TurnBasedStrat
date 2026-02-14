@@ -88,7 +88,7 @@ void AGameField::GenerateGrid()
 
 				// Converto il NormalizedNoise in un livello di altezza discreto
 				int32 HeightLevel;
-				if (NormalizedNoise < 0.38f)
+				if (NormalizedNoise < 0.42f)
 				{
 					HeightLevel = 0;
 				}
@@ -100,7 +100,7 @@ void AGameField::GenerateGrid()
 				{
 					HeightLevel = 2;
 				}
-				else if (NormalizedNoise < 0.62f)
+				else if (NormalizedNoise < 0.64f)
 				{
 					HeightLevel = 3;
 				}

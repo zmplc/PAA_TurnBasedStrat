@@ -4,6 +4,7 @@
 #include "Unit.h"
 #include "GameField.h"
 #include "TBS_GameMode.h"
+#include "EngineUtils.h"
 
 // Sets default values
 AUnit::AUnit()
@@ -117,7 +118,7 @@ bool AUnit::CanMoveTo(int32 TargetX, int32 TargetY, const AGameField* GameField)
 					if (Neighbor && Neighbor->IsWalkable() && Neighbor->GetTileType() != ETileType::TOWER)
 					{
 						// Controllo il costo di movimento per arrivare a questa tile adiacente
-						int32 MoveCost = GetMovementCost(NeighborX, NeighborY, GameField);
+						int32 MoveCost = GetMovementCost(Current.X, Current.Y, NeighborX, NeighborY, GameField);
 
 						// Se posso muovermi in questa tile adiacente
 						if (MoveCost > 0)
@@ -156,26 +157,34 @@ bool AUnit::MoveTo(int32 TargetX, int32 TargetY, AGameField* GameField)
 	ATile* TargetTile = GameField->GetTileAtPosition(TargetX, TargetY);
 	if (TargetTile)
 	{
-		FVector NewLocation = TargetTile->GetActorLocation();
-		NewLocation.Z += 150.f;
-		SetActorLocation(NewLocation);
-	}
+		FVector TileLocation = TargetTile->GetActorLocation();
+		FVector NewLocation = TileLocation;
+		NewLocation.Z = TileLocation.Z + 150.f;
 
+		SetActorLocation(NewLocation);
+		UE_LOG(LogTemp, Log, TEXT("MoveTo: Unita' mossa"));
+
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("MoveTo: TargetTile e' nulla"));
+		return false;
+	}
 	bHasMovedThisTurn = true;
 	return true;
 }
 
 // Calcolo del costo di movimento in base alla differenza di livello tra tile corrente e target tile
-int32 AUnit::GetMovementCost(int32 TargetX, int32 TargetY, const AGameField* GameField) const
+int32 AUnit::GetMovementCost(int32 FromX, int32 FromY, int32 TargetX, int32 TargetY, const AGameField* GameField) const
 {
 	if (!GameField) return 0;
 
 	// Tile corrente e target tile
 	FVector2D CurrPos = GetCurrentGridPosition();
-	ATile* CurrTile = GameField->GetTileAtPosition(CurrPos.X, CurrPos.Y);
+	ATile* CurrTile = GameField->GetTileAtPosition(FromX, FromY);
 	ATile* TargetTile = GameField->GetTileAtPosition(TargetX, TargetY);
 
-	if (!TargetTile) return 0;
+	if (!TargetTile || !CurrTile) return 0;
 
 	// Non è possibile muoversi sopra le caselle di livello 0 (acqua), Torri e dove è già presente un'altra unità
 	// anche se queste caselle si trovano nel tragitto (non si possono "saltare)
@@ -184,12 +193,20 @@ int32 AUnit::GetMovementCost(int32 TargetX, int32 TargetY, const AGameField* Gam
 		return 0;
 	}
 
-	// L'unità può muoversi solo in orizzontale o verticale e non in diagonale
-	int32 dx = FMath::Abs<int32>(TargetX - CurrPos.X);
-	int32 dy = FMath::Abs<int32>(TargetY - CurrPos.Y);
-	if (dx + dy != 1)
+	// Controllo se sulla target tile c'è già un'altra unità
+	for (TActorIterator<AUnit> It(GetWorld()); It; ++It)
 	{
-		return 0;
+		AUnit* OtherUnit = *It;
+		if (OtherUnit && OtherUnit != this && OtherUnit->IsAlive())
+		{
+			FVector2D OtherPos = OtherUnit->GetCurrentGridPosition();
+			if (FMath::RoundToInt(OtherPos.X) == TargetX && FMath::RoundToInt(OtherPos.Y) == TargetY)
+			{
+				// C'è già un'altra unità sulla target tile
+				UE_LOG(LogTemp, Log, TEXT("GetMovementCost: Tile (%d, %d) occupata da %s"),	TargetX, TargetY, *OtherUnit->GetName());
+				return 0;
+			}
+		}
 	}
 
 	// Ora calcolo il costo del movimento in base al livello delle tile
