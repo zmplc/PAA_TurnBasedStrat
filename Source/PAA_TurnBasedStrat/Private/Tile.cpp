@@ -27,7 +27,7 @@ ATile::ATile()
 	bWalkable = true;
 	bIsHighlighted = false;
 	OriginalColor = FLinearColor::Black;
-
+	bHasTower = false;
 }
 
 void ATile::SetTileStatus(const int32 TileOwner, const ETileStatus TileStatus)
@@ -116,7 +116,19 @@ ETileType ATile::GetTileType() const
 // Funzione per fare il check se la tile è walkable
 bool ATile::IsWalkable() const
 {
-	return bWalkable && Status == ETileStatus::EMPTY;
+	return bWalkable && Status == ETileStatus::EMPTY && !bHasTower;
+}
+
+// Setter per dire che la tile con torre non è più walkable
+void ATile::SetHasTower(bool bInHasTower)
+{
+	bHasTower = bInHasTower;
+
+	// La tile con torre non è più camminabile
+	if (bHasTower)
+	{
+		bWalkable = false;
+		UE_LOG(LogTemp, Log, TEXT("Tile (%d,%d): Torre piazzata, non piu' camminabile"), FMath::RoundToInt(TileGridPosition.X),	FMath::RoundToInt(TileGridPosition.Y));}
 }
 
 // Update colore tile in base al tipo
@@ -170,6 +182,8 @@ void ATile::UpdateTileHeight()
 	CurrentLocation.Z = HeightLevel * 10.0f;
 	SetActorLocation(CurrentLocation);
 }
+
+
 
 // Called when the game starts or when spawned
 void ATile::BeginPlay()

@@ -26,6 +26,10 @@ public:
     UPROPERTY(Transient)
     TArray<ATile*> TileArray;
 
+    // Torri
+    UPROPERTY()
+    TArray<ATower*> TowerArray;
+
     UPROPERTY(Transient)
     TMap<FVector2D, ATile*> TileMap;
 

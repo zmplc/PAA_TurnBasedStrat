@@ -70,6 +70,12 @@ public:
 	// Funzione per fare l'highlight della tile selezionata
 	void HighlightTile(bool bHighlight);
 
+	// Setter per dire che la tile ha una torre
+	void SetHasTower(bool bInHasTower);
+
+	// Funzione per sapere se la tile ha una torre
+	bool HasTower() const { return bHasTower; }
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -107,10 +113,14 @@ protected:
 	UMaterialInstanceDynamic* DynamicMaterial;
 
 	// Colore originale tile pre-highlight
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Tile")
 	FLinearColor OriginalColor;
 
 	// Se la tile è highlighted o no
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Tile")
 	bool bIsHighlighted;
+
+	// Se la tile ha la torre o no
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Tile")
+	bool bHasTower;
 };

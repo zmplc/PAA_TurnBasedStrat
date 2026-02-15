@@ -25,7 +25,6 @@ void AGameField::BeginPlay()
 	Super::BeginPlay();
 
 	GenerateGrid();
-	PlaceTowers();
 }
 
 // Generazione griglia con Perlin Noise
@@ -59,6 +58,18 @@ void AGameField::GenerateGrid()
 
 		TileArray.Empty();
 		TileMap.Empty();
+
+		// Distruggo le torri della precedente generazione
+		for (ATower* OldTower : TowerArray)
+		{
+			if (OldTower && IsValid(OldTower))
+			{
+				UE_LOG(LogTemp, Log, TEXT("Distruggo vecchia torre"));
+				OldTower->Destroy();
+			}
+		}
+
+		TowerArray.Empty();
 
 		// Seed random per generare mappe diverse ad ogni play
 		const int32 Seed = FMath::Rand();
@@ -120,6 +131,8 @@ void AGameField::GenerateGrid()
 		// Dopo lo spawn delle tile controllo se la mappa è connessa ed è quindi senza isole irraggiungibili
 		if (IsMapFullyConnected())
 		{
+			PlaceTowers();
+			UE_LOG(LogTemp, Log, TEXT("Mappa generata con successo - Torri: %d"), TowerArray.Num());
 			return;
 		}
 		// Altrimenti mappa non connessa, allora aumento il contatore dei tentativi e rigenero la mappa e riverifico se la mappa è interamente connessa
@@ -137,42 +150,52 @@ void AGameField::PlaceTowers()
 		UE_LOG(LogTemp, Warning, TEXT("GameField: TowerClass non valida oppure mappa delle tile vuota"));
 		return;
 	}
+
+	// Inizializzo l'array vuoto delle torri
+	TowerArray.Empty();
+
 	// Punti ideali per le torri
 	TArray<FVector2D> TowerPositions = {
 		FVector2D(12, 12),
 		FVector2D(5, 12),
-		FVector2D(19,12)
+		FVector2D(19, 12)
 	};
 
-	// Per ogni posizione ideale che ho definito cerco la posizione camminabile più vicina e spawno la torre
+	// Per ogni posizione ideale spawno la torre
 	for (const FVector2D& IdealPos : TowerPositions)
 	{
 		FVector2D BestPos = FindNearestWalkablePosition(IdealPos);
 
 		int32 X = FMath::RoundToInt(BestPos.X);
 		int32 Y = FMath::RoundToInt(BestPos.Y);
-		
+
 		ATile* TargetTile = GetTileAtPosition(X, Y);
 		if (!TargetTile) continue;
 
 		// Posizione di spawn della torre
 		FVector SpawnLocation = TargetTile->GetActorLocation();
+		SpawnLocation.Z += 100.f;
 
 		// Spawno la torre
-		ATower*	NewTower = GetWorld()->SpawnActor<ATower>(
-			TowerClass,
-			SpawnLocation,
-			FRotator::ZeroRotator
-		);
+		ATower* NewTower = GetWorld()->SpawnActor<ATower>(TowerClass, SpawnLocation, FRotator::ZeroRotator);
 
 		if (NewTower)
 		{
-			// Imposto il tipo della tyle come tower
-			TargetTile->SetTileType(ETileType::TOWER);
+			// Uso SetHasTower per dire che la tile ora ha una torre sopra
+			TargetTile->SetHasTower(true);
+
+			// Salvo la torre nell'array
+			TowerArray.Add(NewTower);
 
 			// Log di conferma
-			UE_LOG(LogTemp, Log, TEXT("Torre spawnata in (%d,%d)"), X, Y);
+			UE_LOG(LogTemp, Log, TEXT("Torre %d spawnata in (%d,%d) - Tipo tile: %d"), TowerArray.Num(), X, Y, (int32)TargetTile->GetTileType());
 		}
+	}
+
+
+	if (TowerArray.Num() != 3)
+	{
+		UE_LOG(LogTemp, Error, TEXT("GameField: Numero torri errato, spawnate: %d (attese: 3)"), TowerArray.Num());
 	}
 }
 

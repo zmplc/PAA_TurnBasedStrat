@@ -188,7 +188,7 @@ int32 AUnit::GetMovementCost(int32 FromX, int32 FromY, int32 TargetX, int32 Targ
 
 	// Non è possibile muoversi sopra le caselle di livello 0 (acqua), Torri e dove è già presente un'altra unità
 	// anche se queste caselle si trovano nel tragitto (non si possono "saltare)
-	if (!TargetTile->IsWalkable() || TargetTile->GetTileType() == ETileType::TOWER)
+	if (!TargetTile->IsWalkable())
 	{
 		return 0;
 	}
