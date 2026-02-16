@@ -116,6 +116,9 @@ public:
 	virtual bool CanMoveTo(int32 TargetX, int32 TargetY, const class AGameField* GameField) const;
 
 	UFUNCTION(BlueprintCallable, Category = "Unit Movement")
+	TArray<FIntPoint> GetReachableTiles(const class AGameField* GameField) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Unit Movement")
 	virtual bool MoveTo(int32 TargetX, int32 TargetY, class AGameField* GameField);
 
 	UFUNCTION(BlueprintCallable, Category = "Unit Movement")

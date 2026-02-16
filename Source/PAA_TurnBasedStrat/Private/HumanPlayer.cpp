@@ -26,6 +26,7 @@ AHumanPlayer::AHumanPlayer()
     IsMyTurn = false;
     bHasPlacedSniper = false;
     bHasPlacedBrawler = false;
+    bIsShowingMovementRange = false;
 }
 
 // Called when the game starts or when spawned
@@ -153,61 +154,106 @@ bool AHumanPlayer::PendingTurnActions() const
 
 void AHumanPlayer::SelectUnit(AUnit* Unit)
 {
-    if (ATBS_GameMode* GM = Cast<ATBS_GameMode>(GetWorld()->GetAuthGameMode()))
+    if (!Unit)
     {
-        if (!Unit)
+        UE_LOG(LogTemp, Warning, TEXT("HumanPlayer: Unita' nulla"));
+        return;
+    }
+
+    ATBS_GameMode* GM = Cast<ATBS_GameMode>(GetWorld()->GetAuthGameMode());
+    if (!GM || !GM->GField) return;
+
+    // Se clicco sulla stessa unità devo nascondere il range di movimento se è già mostrato, altrimento lo mostro
+    if (SelectedUnit == Unit)
+    {
+        
+        if (bIsShowingMovementRange)
         {
-            UE_LOG(LogTemp, Warning, TEXT("HumanPlayer: Unità nulla"));
-            return;
+            // Nascondo range
+            HideMovementRange();
+            UE_LOG(LogTemp, Log, TEXT("HumanPlayer: Range nascosto"));
+            if (GameInstance)
+            {
+                GameInstance->SetTurnMessage(TEXT("Range nascosto - Clicca di nuovo per mostrarlo"));
+            }
+            FVector2D UnitPos = Unit->GetCurrentGridPosition();
+            ATile* CurrentTile = GM->GField->GetTileAtPosition(FMath::RoundToInt(UnitPos.X), FMath::RoundToInt(UnitPos.Y));
+            if (CurrentTile)
+            {
+                CurrentTile->HighlightTile(false);
+            }
+
+            // Deseleziona completamente
+            SelectedUnit = nullptr;
+        }
+        else
+        {
+            // Mostro range
+            ShowMovementRange(Unit);
+            if (GameInstance)
+            {
+                GameInstance->SetTurnMessage(TEXT("Range mostrato"));
+            }
+        }
+        return;
+    }
+
+    // Altrimenti ho selezionato una nuova unità
+
+    // Nascondo range movimento precedente
+    HideMovementRange();
+
+    // Deseleziono l'unità
+    if (SelectedUnit)
+    {
+        FVector2D PrevPos = SelectedUnit->GetCurrentGridPosition();
+        ATile* PrevTile = GM->GField->GetTileAtPosition(FMath::RoundToInt(PrevPos.X), FMath::RoundToInt(PrevPos.Y));
+        if (PrevTile)
+        {
+            PrevTile->HighlightTile(false);
+        }
+        UE_LOG(LogTemp, Log, TEXT("HumanPlayer: Deselezionata unita' precedente"));
+    }
+
+    // Seleziono la nuova unità
+    SelectedUnit = Unit;
+
+    FVector2D UnitPos = Unit->GetCurrentGridPosition();
+    ATile* CurrentTile = GM->GField->GetTileAtPosition(FMath::RoundToInt(UnitPos.X), FMath::RoundToInt(UnitPos.Y));
+
+    if (CurrentTile)
+    {
+        CurrentTile->HighlightTile(true);
+        UE_LOG(LogTemp, Log, TEXT("Tile evidenziata sotto l'unita'"));
+    }
+
+    // Mostro il range di movimento quando seleziono una nuova unità
+    ShowMovementRange(Unit);
+
+    UE_LOG(LogTemp, Log, TEXT("HumanPlayer: Unita' selezionata - %s"), *Unit->GetName());
+
+    // Messaggi GameInstance
+    if (GameInstance)
+    {
+        FString StatusMsg;
+        if (Unit->bHasMovedThisTurn && Unit->bHasAttackedThisTurn)
+        {
+            StatusMsg = TEXT("(ha gia' mosso e attaccato)");
+        }
+        else if (Unit->bHasMovedThisTurn)
+        {
+            StatusMsg = TEXT("(ha gia' mosso, puo' attaccare)");
+        }
+        else if (Unit->bHasAttackedThisTurn)
+        {
+            StatusMsg = TEXT("(ha gia' attaccato, puo' muovere)");
+        }
+        else
+        {
+            StatusMsg = TEXT("(pronta)");
         }
 
-        // Deseleziono unità precedente
-        if (SelectedUnit)
-        {
-            FVector2D PrevPos = SelectedUnit->GetCurrentGridPosition();
-            ATile* PrevTile = GM->GField->GetTileAtPosition(FMath::RoundToInt(PrevPos.X), FMath::RoundToInt(PrevPos.Y));
-            if (PrevTile)
-            {
-                PrevTile->HighlightTile(false);
-            }
-            UE_LOG(LogTemp, Log, TEXT("HumanPlayer: Deselezionata unita' precedente"));
-        }
-
-        // Seleziono la nuova unità
-        SelectedUnit = Unit;
-
-        FVector2D UnitPos = SelectedUnit->GetCurrentGridPosition();
-        ATile* CurrentTile = GM->GField->GetTileAtPosition(FMath::RoundToInt(UnitPos.X), FMath::RoundToInt(UnitPos.Y));
-
-        if (CurrentTile)
-        {
-            CurrentTile->HighlightTile(true);
-            UE_LOG(LogTemp, Log, TEXT("Tile evidenziata sotto l'unita'"));
-        }
-        UE_LOG(LogTemp, Log, TEXT("HumanPlayer: Unità selezionata - %s"), *Unit->GetName());
-
-        if (GameInstance)
-        {
-            FString StatusMsg;
-            if (Unit->bHasMovedThisTurn && Unit->bHasAttackedThisTurn)
-            {
-                StatusMsg = TEXT("(ha gia' mosso e attaccato)");
-            }
-            else if (Unit->bHasMovedThisTurn)
-            {
-                StatusMsg = TEXT("(ha gia' mosso e puo' attaccare)");
-            }
-            else if (Unit->bHasAttackedThisTurn)
-            {
-                StatusMsg = TEXT("(ha gia' attaccato e puo' muovere)");
-            }
-            else
-            {
-                StatusMsg = TEXT("(pronta)");
-            }
-
-            GameInstance->SetTurnMessage(FString::Printf(TEXT("Unita': %s %s"), *Unit->GetName(), *StatusMsg));
-        }
+        GameInstance->SetTurnMessage(FString::Printf(TEXT("Unita': %s %s - Clicca di nuovo per toggle range"), *Unit->GetName(), *StatusMsg));
     }
 }
 
@@ -336,6 +382,9 @@ void AHumanPlayer::OnClick()
             if (SelectedUnit->CanMoveTo(TileX, TileY, GM->GField))
             {
                 FVector2D OldPos = SelectedUnit->GetCurrentGridPosition();
+                // Nascondo range di movimento
+                HideMovementRange();
+                // Rimuovo highlight tile
                 ATile* OldTile = GM->GField->GetTileAtPosition(FMath::RoundToInt(OldPos.X), FMath::RoundToInt(OldPos.Y));
                 
                 SelectedUnit->MoveTo(TileX, TileY, GM->GField);
@@ -345,6 +394,13 @@ void AHumanPlayer::OnClick()
                 if (OldTile)
                 {
                     OldTile->HighlightTile(false);
+                }
+
+                // Evidenzio la nuova tile
+                ATile* NewTile = GM->GField->GetTileAtPosition(TileX, TileY);
+                if (NewTile)
+                {
+                    NewTile->HighlightTile(true);
                 }
 
                 // Controlla fine turno
@@ -384,6 +440,8 @@ void AHumanPlayer::OnClick()
                 UE_LOG(LogTemp, Log, TEXT("Attacco riuscito"));
                 GameInstance->SetTurnMessage(FString::Printf(TEXT("Attacco, danno: %d"), Damage));
 
+                // Nascondo range movimento
+                HideMovementRange();
                 // Devo deselezionare l'unità dopo l'attacco perché per specifiche se attacco non posso effettuare movimento
                 SelectedUnit = nullptr;
                 // Controllo se ci sono azioni rimanenti
@@ -504,13 +562,13 @@ void AHumanPlayer::CheckAndEndTurnIfComplete()
             GameInstance->SetTurnMessage(TEXT("Tutte le unita' hanno agito - Turno AI..."));
         }
 
+        // Nascondo range movimento
+        HideMovementRange();
+
         if (SelectedUnit)
         {
             FVector2D UnitPos = SelectedUnit->GetCurrentGridPosition();
-            ATile* UnitTile = GM->GField->GetTileAtPosition(
-                FMath::RoundToInt(UnitPos.X),
-                FMath::RoundToInt(UnitPos.Y)
-            );
+            ATile* UnitTile = GM->GField->GetTileAtPosition(FMath::RoundToInt(UnitPos.X), FMath::RoundToInt(UnitPos.Y));
             if (UnitTile)
             {
                 UnitTile->HighlightTile(false);
@@ -524,4 +582,53 @@ void AHumanPlayer::CheckAndEndTurnIfComplete()
         FTimerHandle TimerHandle;
         GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this, GM]() {GM->TurnNextPlayer(PlayerID);}, 1.0f, false);
     }
+}
+
+void AHumanPlayer::ShowMovementRange(AUnit* Unit)
+{
+    if (!Unit) return;
+
+    ATBS_GameMode* GM = Cast<ATBS_GameMode>(GetWorld()->GetAuthGameMode());
+    if (!GM || !GM->GField) return;
+
+    // Nascondo range precedente se ce ne fosse ancora uno per evitare bug
+    HideMovementRange();
+
+    UE_LOG(LogTemp, Log, TEXT("HumanPlayer: Range movimento per %s mostrato"), *Unit->GetName());
+
+    // Chiamo GetReachableTiles per ottenere le tile raggiungibili
+    TArray<FIntPoint> ReachableTiles = Unit->GetReachableTiles(GM->GField);
+
+    // Per le tile raggiungibili mostro un overlay bianco
+    for (const FIntPoint& TilePos : ReachableTiles)
+    {
+        ATile* Tile = GM->GField->GetTileAtPosition(TilePos.X, TilePos.Y);
+        if (Tile)
+        {
+            Tile->ShowMovementOverlay(true);
+            HighlightedMovementTiles.Add(Tile);
+        }
+    }
+
+    bIsShowingMovementRange = true;
+    UE_LOG(LogTemp, Log, TEXT("HumanPlayer: %d tile evidenziate"), HighlightedMovementTiles.Num());
+}
+
+void AHumanPlayer::HideMovementRange()
+{
+    if (HighlightedMovementTiles.Num() == 0) return;
+
+    UE_LOG(LogTemp, Log, TEXT("HumanPlayer: Nascondo range movimento"));
+
+    // A tutte le tile evidenziate rimuovo l'overlay
+    for (ATile* Tile : HighlightedMovementTiles)
+    {
+        if (Tile && IsValid(Tile))
+        {
+            Tile->ShowMovementOverlay(false);
+        }
+    }
+
+    HighlightedMovementTiles.Empty();
+    bIsShowingMovementRange = false;
 }

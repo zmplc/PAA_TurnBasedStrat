@@ -76,6 +76,9 @@ public:
 	// Funzione per sapere se la tile ha una torre
 	bool HasTower() const { return bHasTower; }
 
+	// Funzione per mostrare overlay per range movimento
+	void ShowMovementOverlay(bool bShow);
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -123,4 +126,8 @@ protected:
 	// Se la tile ha la torre o no
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Tile")
 	bool bHasTower;
+
+	// Se l'overlay per range movimento è attivo o no
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Tile")
+	bool bHasMovementOverlay;
 };

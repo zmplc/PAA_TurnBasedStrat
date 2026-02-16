@@ -46,35 +46,58 @@ void AUnit::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 // con controllo finale del costo totale del movimento per vedere se supera il movimento definito nelle proprietà dell'unità
 bool AUnit::CanMoveTo(int32 TargetX, int32 TargetY, const AGameField* GameField) const
 {
-	if (!GameField) return 0;
+	if (!GameField) return false;
 
-	// Tile di partenza e target tile
+	// Tile di partenza
 	FVector2D StartTile = GetCurrentGridPosition();
 	int32 StartX = FMath::RoundToInt(StartTile.X);
 	int32 StartY = FMath::RoundToInt(StartTile.Y);
-	ATile* TargetTile = GameField->GetTileAtPosition(TargetX, TargetY);
 
-	// Se tile corrente = target tile non è necessario muoversi
+	// Se tile corrente = target tile, non serve muoversi
 	if (StartX == TargetX && StartY == TargetY) return false;
 
-	// Uso BFS per trovare il percorso più breve (quindi ho bisogno di una coda e di tenere conto delle tile visitate)
+	// Altrimenti chiamo GetReachableTiles per ottenere tutte le tile raggiungibili con BFS
+	TArray<FIntPoint> ReachableTiles = GetReachableTiles(GameField);
+
+	// Controllo se la target tile è tra quelle raggiungibili
+	for (const FIntPoint& Tile : ReachableTiles)
+	{
+		if (Tile.X == TargetX && Tile.Y == TargetY)
+		{
+			return true;
+		}
+	}
+
+	// Se tile non raggiungibile ritorno false
+	return false;
+}
+
+TArray<FIntPoint> AUnit::GetReachableTiles(const AGameField* GameField) const
+{
+	TArray<FIntPoint> ReachableTiles;
+
+	if (!GameField) return ReachableTiles;
+
+	// Tile di partenza
+	FVector2D StartTile = GetCurrentGridPosition();
+	int32 StartX = FMath::RoundToInt(StartTile.X);
+	int32 StartY = FMath::RoundToInt(StartTile.Y);
+
 	// Array per tenere traccia delle tile visitate
 	TArray<bool> Visited;
-	// Inizializzo l'array delle tile visitate a false e dimensione della griglia
 	Visited.Init(false, GameField->GridSizeX * GameField->GridSizeY);
 
-	// Coda per BFS per le celle da visitare
+	// Coda per BFS
 	TQueue<FIntPoint> Queue;
-	// Coda per tenere traccia del costo di movimento totale per ogni tile
 	TMap<FIntPoint, int32> CostMap;
 
-	// Parto dalla StartTile: la inserisco nella coda, la segno visitata e costo 0
+	// Parto dalla StartTile
 	FIntPoint StartPoint(StartX, StartY);
 	Queue.Enqueue(StartPoint);
 	Visited[StartY * GameField->GridSizeX + StartX] = true;
 	CostMap.Add(StartPoint, 0);
 
-	// Definisco le possibili direzioni di movimento dell'unità: no obliquo quindi solo su, giù, destra e sinistra
+	// Direzioni di movimento (no diagonali)
 	TArray<FIntPoint> Directions = {
 		FIntPoint(0, 1),
 		FIntPoint(0, -1),
@@ -82,64 +105,55 @@ bool AUnit::CanMoveTo(int32 TargetX, int32 TargetY, const AGameField* GameField)
 		FIntPoint(-1, 0)
 	};
 
-	// Inizio il ciclo BFS finché ho tile da visitare nella coda
+	// BFS per trovare tutte le tile raggiungibili
 	while (!Queue.IsEmpty())
 	{
-		// Estraggo la tile corrente dalla coda
 		FIntPoint Current;
 		Queue.Dequeue(Current);
 
-		// Costo totale per arrivare a questa tile
 		int32 CurrentCost = CostMap[Current];
 
-		// Se sono arrivato alla target tile allora controllo se il costo totale del movimento è entro il massimo movimento definito nelle proprietà dell'unità
-		if (Current.X == TargetX && Current.Y == TargetY)
-		{
-			return CurrentCost <= MaxMovement;
-		}
-
-		// Se non sono arrivato alla target tile controllo le 4 tile adiacenti seguendo le direzioni
+		// Controllo le 4 tile adiacenti
 		for (const FIntPoint& Dir : Directions)
 		{
 			int32 NeighborX = Current.X + Dir.X;
 			int32 NeighborY = Current.Y + Dir.Y;
-			
-			// Controllo che la tile adiacente sia dentro la griglia
+
+			// Controllo di essere dentro la griglia
 			if (NeighborX >= 0 && NeighborX < GameField->GridSizeX && NeighborY >= 0 && NeighborY < GameField->GridSizeY)
 			{
 				int32 Index = NeighborY * GameField->GridSizeX + NeighborX;
 
-				// Se la tile adiacente non è ancora stata visitata
 				if (!Visited[Index])
 				{
 					ATile* Neighbor = GameField->GetTileAtPosition(NeighborX, NeighborY);
 
-					// Se la cella è valida quindi è camminabile e non è una torre
-					if (Neighbor && Neighbor->IsWalkable() && Neighbor->GetTileType() != ETileType::TOWER)
+					if (Neighbor && Neighbor->IsWalkable())
 					{
-						// Controllo il costo di movimento per arrivare a questa tile adiacente
 						int32 MoveCost = GetMovementCost(Current.X, Current.Y, NeighborX, NeighborY, GameField);
 
-						// Se posso muovermi in questa tile adiacente
 						if (MoveCost > 0)
 						{
 							int32 NewCost = CurrentCost + MoveCost;
 
-							// Se NewCost supera il massimo movimento dell'unità la ignoro e non continuo ad esplorare le celle adiacenti a questa
-							if (NewCost > MaxMovement) continue;
+							if (NewCost <= MaxMovement)
+							{
+								Visited[Index] = true;
+								CostMap.Add(FIntPoint(NeighborX, NeighborY), NewCost);
+								Queue.Enqueue(FIntPoint(NeighborX, NeighborY));
 
-							// Se NewCost è entro il massimo movimento definito nelle proprietà dell'unità allora la segno come visitata e la aggiungo alla coda
-							Visited[Index] = true;
-							CostMap.Add(FIntPoint(NeighborX, NeighborY), NewCost);
-							Queue.Enqueue(FIntPoint(NeighborX, NeighborY));
+								// Aggiungo la tile nelle array delle tile raggiungibili
+								ReachableTiles.Add(FIntPoint(NeighborX, NeighborY));
+							}
 						}
 					}
 				}
 			}
 		}
 	}
-	// Se esco dal ciclo vuol dire che non ho trovato alcun percorso valido
-	return false;
+
+	UE_LOG(LogTemp, Log, TEXT("GetReachableTiles: %d tile raggiungibili trovate"), ReachableTiles.Num());
+	return ReachableTiles;
 }
 
 bool AUnit::MoveTo(int32 TargetX, int32 TargetY, AGameField* GameField)

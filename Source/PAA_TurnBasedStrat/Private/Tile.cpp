@@ -28,6 +28,7 @@ ATile::ATile()
 	bIsHighlighted = false;
 	OriginalColor = FLinearColor::Black;
 	bHasTower = false;
+	bHasMovementOverlay = false;
 }
 
 void ATile::SetTileStatus(const int32 TileOwner, const ETileStatus TileStatus)
@@ -169,7 +170,7 @@ void ATile::UpdateTileColor()
 	OriginalColor = TileColor;
 
 	// Se la tile non è highlighted allora metto il suo colore
-	if (!bIsHighlighted)
+	if (!bIsHighlighted && !bHasMovementOverlay)
 	{
 		DynamicMaterial->SetVectorParameterValue(TEXT("TileColor"), TileColor);
 	}
@@ -218,7 +219,46 @@ void ATile::HighlightTile(bool bHighlight)
 	}
 	else
 	{
-		DynamicMaterial->SetVectorParameterValue(TEXT("TileColor"), OriginalColor);
+		if (bHasMovementOverlay)
+		{
+			// Se overlay movimento attivo mostro quello
+			FLinearColor OverlayColor = OriginalColor * 0.8f + FLinearColor::White * 0.2f; 
+			DynamicMaterial->SetVectorParameterValue(TEXT("TileColor"), OverlayColor);
+		}
+		else
+		{
+			// Altrimenti lascio colore originale
+			DynamicMaterial->SetVectorParameterValue(TEXT("TileColor"), OriginalColor);
+		}
+	}
+}
+
+void ATile::ShowMovementOverlay(bool bShow)
+{
+	if (!DynamicMaterial) return;
+
+	bHasMovementOverlay = bShow;
+
+	if (bShow)
+	{
+		// Overlay bianco sopra tile
+		FLinearColor OverlayColor = OriginalColor * 0.8f + FLinearColor::White * 0.2f;
+		DynamicMaterial->SetVectorParameterValue(TEXT("TileColor"), OverlayColor);
+
+		UE_LOG(LogTemp, Log, TEXT("Tile (%d,%d): Overlay movimento attivo"), FMath::RoundToInt(TileGridPosition.X), FMath::RoundToInt(TileGridPosition.Y));
+	}
+	else
+	{
+		// Nel caso overlay non attivo imposto cyan la tile se evidenziata, altrimenti lascio colore originale
+		if (bIsHighlighted)
+		{
+			FLinearColor HighlightColor = FLinearColor(0.0f, 1.0f, 1.0f);
+			DynamicMaterial->SetVectorParameterValue(TEXT("TileColor"), HighlightColor);
+		}
+		else
+		{
+			DynamicMaterial->SetVectorParameterValue(TEXT("TileColor"), OriginalColor);
+		}
 	}
 }
 

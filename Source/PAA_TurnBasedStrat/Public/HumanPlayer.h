@@ -65,6 +65,14 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Unit")
 	EUnitType PendingUnitTypeToSpawn;
 
+	// Array delle tile evidenziate per range movimento
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Unit")
+	TArray<ATile*> HighlightedMovementTiles;
+
+	// Sto mostrando range movimento: y/n
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Unit")
+	bool bIsShowingMovementRange;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -95,4 +103,12 @@ public:
 	// Funzione per controllare se tutte le unità si sono mosse, se si termino turno
 	UFUNCTION()
 	void CheckAndEndTurnIfComplete();
+
+	// Funzione per mostrare range movimento
+	UFUNCTION()
+	void ShowMovementRange(AUnit* Unit);
+
+	// Funzione per nascondere range movimento
+	UFUNCTION()
+	void HideMovementRange();
 };
