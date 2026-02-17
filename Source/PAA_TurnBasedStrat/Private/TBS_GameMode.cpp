@@ -131,6 +131,8 @@ void ATBS_GameMode::StartPlacementPhase()
 	// Log
 	UE_LOG(LogTemp, Log, TEXT("Fase di piazzamento unità iniziata"));
 
+	// Chiamo funzione ShowPlacementZones per mostrare le zone di piazzamento per entrambi i player
+	ShowPlacementZones();
 	// Chiamo funzione StartPlacementTurn con il giocatore vincitore di TossCoin
 	StartPlacementTurn(CurrentPlayer);
 }
@@ -166,6 +168,8 @@ void ATBS_GameMode::OnUnitPlaced(int32 PlayerID)
 	if (UnitsPlaced >= 4)
 	{
 		UE_LOG(LogTemp, Log, TEXT("Piazzamento delle unità completato"));
+		// Nascondo zone piazzamento iniziale
+		HidePlacementZones();
 		// Fine fase di piazzamento
 		bPlacementPhase = false;
 		// Inizio partita
@@ -314,4 +318,53 @@ void ATBS_GameMode::OnUnitDied(AUnit* DeadUnit)
 
 	// Respawn alla posizione iniziale
 	DeadUnit->RespawnAtInitialPosition(); // TODO: ancora da fare la funzione
+}
+
+void ATBS_GameMode::ShowPlacementZones()
+{
+	PlacementZoneTiles.Empty();
+
+	// Y per HumanPlayer
+	for (int32 Y = 0; Y <= 2; ++Y)
+	{
+		for (int32 X = 0; X < GField->GridSizeX; ++X)
+		{
+			ATile* Tile = GField->GetTileAtPosition(X, Y);
+			if (Tile && Tile->IsWalkable())
+			{
+				Tile->ShowPlacementOverlay(true);
+				PlacementZoneTiles.Add(Tile);
+			}
+		}
+	}
+
+	// Y per AIPlayer
+	for (int32 Y = 22; Y <= 24; ++Y)
+	{
+		for (int32 X = 0; X < GField->GridSizeX; ++X)
+		{
+			ATile* Tile = GField->GetTileAtPosition(X, Y);
+			if (Tile && Tile->IsWalkable())
+			{
+				Tile->ShowPlacementOverlay(true);
+				PlacementZoneTiles.Add(Tile);
+			}
+		}
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("GameMode: %d tile di piazzamento evidenziate"), PlacementZoneTiles.Num());
+}
+
+void ATBS_GameMode::HidePlacementZones()
+{
+	for (ATile* Tile : PlacementZoneTiles)
+	{
+		if (Tile && IsValid(Tile))
+		{
+			Tile->ShowPlacementOverlay(false);
+		}
+	}
+
+	PlacementZoneTiles.Empty();
+	UE_LOG(LogTemp, Log, TEXT("GameMode: Zone piazzamento nascoste"));
 }

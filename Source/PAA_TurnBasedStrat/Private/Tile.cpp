@@ -21,7 +21,7 @@ ATile::ATile()
 	PlayerOwner = -1;
 	TileGridPosition = FVector2D(0, 0);
 
-	// Valori default per la tile
+	// Valori default inizializzazione
 	HeightLevel = 1;
 	TileType = ETileType::GROUND;
 	bWalkable = true;
@@ -29,6 +29,7 @@ ATile::ATile()
 	OriginalColor = FLinearColor::Black;
 	bHasTower = false;
 	bHasMovementOverlay = false;
+	bHasPlacementOverlay = false;
 }
 
 void ATile::SetTileStatus(const int32 TileOwner, const ETileStatus TileStatus)
@@ -169,8 +170,22 @@ void ATile::UpdateTileColor()
 
 	OriginalColor = TileColor;
 
-	// Se la tile non è highlighted allora metto il suo colore
-	if (!bIsHighlighted && !bHasMovementOverlay)
+	// Controlli per colori nel caso di highlight, overlay o overlay iniziale. Altrimenti colore iniziale
+	if (bIsHighlighted)
+	{
+		DynamicMaterial->SetVectorParameterValue(TEXT("TileColor"), FLinearColor(0.0f, 1.0f, 1.0f));
+	}
+	else if (bHasMovementOverlay)
+	{
+		FLinearColor MovColor = OriginalColor * 0.8f + FLinearColor::White * 0.2f;
+		DynamicMaterial->SetVectorParameterValue(TEXT("TileColor"), MovColor);
+	}
+	else if (bHasPlacementOverlay)
+	{
+		FLinearColor PlacementColor = OriginalColor * 0.8f + FLinearColor::White * 0.2f;
+		DynamicMaterial->SetVectorParameterValue(TEXT("TileColor"), PlacementColor);
+	}
+	else
 	{
 		DynamicMaterial->SetVectorParameterValue(TEXT("TileColor"), TileColor);
 	}
@@ -225,6 +240,12 @@ void ATile::HighlightTile(bool bHighlight)
 			FLinearColor OverlayColor = OriginalColor * 0.8f + FLinearColor::White * 0.2f; 
 			DynamicMaterial->SetVectorParameterValue(TEXT("TileColor"), OverlayColor);
 		}
+		else if (bHasPlacementOverlay)
+		{
+			// Overlay piazzamento iniziale
+			FLinearColor PlacementColor = OriginalColor * 0.8f + FLinearColor::White * 0.2f;
+			DynamicMaterial->SetVectorParameterValue(TEXT("TileColor"), PlacementColor);
+		}
 		else
 		{
 			// Altrimenti lascio colore originale
@@ -254,6 +275,43 @@ void ATile::ShowMovementOverlay(bool bShow)
 		{
 			FLinearColor HighlightColor = FLinearColor(0.0f, 1.0f, 1.0f);
 			DynamicMaterial->SetVectorParameterValue(TEXT("TileColor"), HighlightColor);
+		}
+		else if (bHasPlacementOverlay)
+		{
+			// Overlay piazzamento iniziale
+			FLinearColor PlacementColor = OriginalColor * 0.8f + FLinearColor::White * 0.2f;
+			DynamicMaterial->SetVectorParameterValue(TEXT("TileColor"), PlacementColor);
+		}
+		else
+		{
+			DynamicMaterial->SetVectorParameterValue(TEXT("TileColor"), OriginalColor);
+		}
+	}
+}
+
+void ATile::ShowPlacementOverlay(bool bShow)
+{
+	if (!DynamicMaterial) return;
+
+	bHasPlacementOverlay = bShow;
+
+	// Se fase piazzamento attivo overlay piazzamento iniziale con colore del player
+	if (bShow)
+	{
+		FLinearColor PlacementColor = OriginalColor * 0.8f + FLinearColor::White * 0.2f;
+		DynamicMaterial->SetVectorParameterValue(TEXT("TileColor"), PlacementColor);
+	}
+	else
+	{
+		// Altrimenti se non sono fase piazzamento lascio highlight tile oppure overlay range movimento oppure colore originale tile
+		if (bIsHighlighted)
+		{
+			DynamicMaterial->SetVectorParameterValue(TEXT("TileColor"), FLinearColor(0.0f, 1.0f, 1.0f));
+		}
+		else if (bHasMovementOverlay)
+		{
+			FLinearColor MovementColor = OriginalColor * 0.8f + FLinearColor::White * 0.2f;
+			DynamicMaterial->SetVectorParameterValue(TEXT("TileColor"), MovementColor);
 		}
 		else
 		{

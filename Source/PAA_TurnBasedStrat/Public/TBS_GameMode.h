@@ -89,6 +89,10 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Placement")
 	int32 UnitsPlaced = 0;
 
+	// Array tile per piazzamento iniziale
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Placement")
+	TArray<ATile*> PlacementZoneTiles;
+
 	// METODI
 	// Inizio fase piazzamento unità
 	UFUNCTION(BlueprintCallable, Category = "Game")
@@ -125,6 +129,14 @@ public:
 	// Gestione destroy e respawn quando una unità muore
 	UFUNCTION(BlueprintCallable, Category = "Game")
 	void OnUnitDied(AUnit* DeadUnit);
+
+	// Funzione per mostrare zona piazzamento
+	UFUNCTION(BlueprintCallable, Category = "Game")
+	void ShowPlacementZones();
+
+	// Funzione per nascondere zona piazzamento
+	UFUNCTION(BlueprintCallable, Category = "Game")
+	void HidePlacementZones();
 
 private:
 	FTimerHandle ResetTimerHandle;

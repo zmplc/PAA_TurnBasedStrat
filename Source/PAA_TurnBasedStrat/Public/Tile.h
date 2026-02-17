@@ -79,6 +79,9 @@ public:
 	// Funzione per mostrare overlay per range movimento
 	void ShowMovementOverlay(bool bShow);
 
+	// Funzione per mostrare overlay per piazzamento iniziale
+	void ShowPlacementOverlay(bool bShow);
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -130,4 +133,8 @@ protected:
 	// Se l'overlay per range movimento è attivo o no
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Tile")
 	bool bHasMovementOverlay;
+
+	// Se l'overlay per piazzamento iniziale è attivo o no
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Tile")
+	bool bHasPlacementOverlay;
 };
