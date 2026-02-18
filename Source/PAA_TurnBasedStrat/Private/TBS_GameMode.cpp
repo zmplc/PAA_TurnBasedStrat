@@ -131,10 +131,36 @@ void ATBS_GameMode::StartPlacementPhase()
 	// Log
 	UE_LOG(LogTemp, Log, TEXT("Fase di piazzamento unità iniziata"));
 
+	UTBS_GameInstance* GI = GetGameInstance<UTBS_GameInstance>();
+	if (!GI) return;
+
+	GI->SetTurnOwner(TEXT("Lancio moneta..."));
+	GI->SetTurnMessage(TEXT("Lancio moneta per decidere chi inizia..."));
+
+	// Dopo 1 secondo mostro lancio in corso
+	FTimerHandle Timer1;
+	GetWorld()->GetTimerManager().SetTimer(Timer1, [this, GI]()
+		{
+			GI->SetTurnMessage(TEXT("Lancio in corso..."));
+		}, 2.0f, false);
+
+	// Dopo mostro chi ha vinto il lancio
+	FTimerHandle Timer2;
+	FString WinnerText = bHumanStarts ? TEXT("HumanPlayer") : TEXT("AI");
+	GetWorld()->GetTimerManager().SetTimer(Timer2, [this, GI, WinnerText]()
+		{
+			GI->SetTurnMessage(FString::Printf(TEXT("%s vince e inizia!"), *WinnerText));
+		}, 4.0f, false);
 	// Chiamo funzione ShowPlacementZones per mostrare le zone di piazzamento per entrambi i player
 	ShowPlacementZones();
-	// Chiamo funzione StartPlacementTurn con il giocatore vincitore di TossCoin
-	StartPlacementTurn(CurrentPlayer);
+
+	// Dopo faccio iniziare fase di piazzamento per CurrentPlayer
+	FTimerHandle Timer3;
+	GetWorld()->GetTimerManager().SetTimer(Timer3, [this]()
+		{
+			// Chiamo funzione StartPlacementTurn con il giocatore vincitore di TossCoin
+			StartPlacementTurn(CurrentPlayer);
+		}, 6.0f, false);
 }
 
 void ATBS_GameMode::StartPlacementTurn(int32 PlayerID)
@@ -144,11 +170,19 @@ void ATBS_GameMode::StartPlacementTurn(int32 PlayerID)
 	{
 		HumanPlayer->OnPlacementTurnStart();
 		UE_LOG(LogTemp, Log, TEXT("StartPlacementTurn: turno piazzamento per HumanPlayer"));
+		if (UTBS_GameInstance* GI = GetGameInstance<UTBS_GameInstance>())
+		{
+			GI->SetTurnOwner(TEXT("Turno: Giocatore"));
+		}
 	}
 	else if (PlayerID == 1 && RandomPlayer.GetInterface())
 	{
 		RandomPlayer->OnPlacementTurnStart();
 		UE_LOG(LogTemp, Log, TEXT("StartPlacementTurn: turno piazzamento per RandomPlayer"));
+		if (UTBS_GameInstance* GI = GetGameInstance<UTBS_GameInstance>())
+		{
+			GI->SetTurnOwner(TEXT("Turno: AI"));
+		}
 	}
 	else
 	{
@@ -193,8 +227,8 @@ void ATBS_GameMode::StartTurn(int32 PlayerID)
 		UE_LOG(LogTemp, Log, TEXT("StartTurn: turno iniziato per HumanPlayer"));
 		if (UTBS_GameInstance* GI = GetGameInstance<UTBS_GameInstance>())
 		{
-			FString Msg = TEXT("Turno di HumanPlayer");
-			GI->SetTurnMessage(Msg);
+			GI->SetTurnOwner(TEXT("Turno: Giocatore"));
+			GI->SetTurnMessage(TEXT("Muovi le tue unita'"));
 		}
 	}
 	else if (PlayerID == 1 && RandomPlayer.GetInterface())
@@ -203,14 +237,13 @@ void ATBS_GameMode::StartTurn(int32 PlayerID)
 		UE_LOG(LogTemp, Log, TEXT("StartTurn: turno iniziato per RandomPlayer"));
 		if (UTBS_GameInstance* GI = GetGameInstance<UTBS_GameInstance>())
 		{
-			FString Msg = TEXT("Turno di AIPlayer");
-			GI->SetTurnMessage(Msg);
+			GI->SetTurnOwner(TEXT("Turno: AI"));
+			GI->SetTurnMessage(TEXT("L'AI sta pensando..."));
 		}
 	}
 
 	// Incremento contatore turni
 	TurnCounter++;
-
 }
 
 // Turno successivo con messaggi gameinstance

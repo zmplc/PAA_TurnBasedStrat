@@ -28,7 +28,11 @@ public:
 
 	// message to show every turn
 	UPROPERTY(EditAnywhere, Category = "UI")
-	FString CurrentTurnMessage = "Current Player";
+	FString CurrentTurnMessage = "Message";
+
+	// Messaggio per mostrare di chi è il turno
+	UPROPERTY(EditAnywhere, Category = "UI")
+	FString CurrentTurnOwner = "Current Player";
 
 	// Incremento vittorie HumanPlayer
 	UFUNCTION(BlueprintCallable, Category = "Score")
@@ -50,11 +54,19 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Score")
 	void ResetScores();
 
-	// Getter messaggio turno
+	// Getter messaggio
 	UFUNCTION(BlueprintCallable, Category = "UI")
 	FString GetTurnMessage() const;
 
-	// Setter messaggio turno
+	// Setter messaggio
 	UFUNCTION(BlueprintCallable, Category = "UI")
 	void SetTurnMessage(const FString& Message);
+
+	// Getter turno
+	UFUNCTION(BlueprintCallable, Category = "UI")
+	FString GetTurnOwner() const;
+
+	// Setter turno
+	UFUNCTION(BlueprintCallable, Category = "UI")
+	void SetTurnOwner(const FString& Owner);
 };

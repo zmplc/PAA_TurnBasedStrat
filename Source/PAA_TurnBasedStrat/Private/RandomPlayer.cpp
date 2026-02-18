@@ -73,11 +73,6 @@ void ARandomPlayer::OnTurnStart()
 	IsMyTurn = true;
 	UE_LOG(LogTemp, Log, TEXT("RandomPlayer: Il mio turno"));
 
-	if (GameInstance)
-	{
-		GameInstance->SetTurnMessage(TEXT("Turno AI"));
-	}
-
 	// TODO: da fare logica movimento e attacco
 }
 

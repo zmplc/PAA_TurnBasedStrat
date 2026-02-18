@@ -47,3 +47,13 @@ void UTBS_GameInstance::SetTurnMessage(const FString& Message)
     CurrentTurnMessage = Message;
 }
 
+FString UTBS_GameInstance::GetTurnOwner() const
+{
+    return CurrentTurnOwner;
+}
+
+void UTBS_GameInstance::SetTurnOwner(const FString& Owner)
+{
+    CurrentTurnOwner = Owner;
+}
+
