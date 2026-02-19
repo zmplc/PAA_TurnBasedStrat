@@ -5,16 +5,16 @@ Questo progetto consiste nell'implementazione in Unreal Engine 5.6 di un gioco s
 
 ### Requisiti implementati
 
-[] Il progetto compila correttamente, il codice è ben commentato e ben strutturato (polimorfismo ed ereditarietà).
-[] Griglia di gioco iniziale graficamente corretta e interamente visibile nello schermo.
-[] Meccanismo di posizionamento Unità di Gioco e Torri come da specifiche
-[] AI che utilizza algoritmo A* (movimento e attacco).
-[] Il gioco funziona a turni e termina quando un giocatore vince
-[] Interfaccia grafica rappresentante lo stato corrente del gioco (turno corrente, vita rimanente di ciascuna unità, Torri conquistate).
-[] Suggerimenti del range di movimento possibile per ciascuna unità cliccando sulla stessa, colorando opportunamente tutte le celle nel range.
-[] Implementazione del meccanismo del danno da contrattacco (guarda "Osservazioni e ulteriori specifiche").
-[] Lista dello storico delle mosse eseguite.
-[] AI che utilizza algoritmi euristici ottimizzati di movimento (diverso da A*).
+* [ ] Il progetto compila correttamente, il codice è ben commentato e ben strutturato (polimorfismo ed ereditarietà).
+* [ ] Griglia di gioco iniziale graficamente corretta e interamente visibile nello schermo.
+* [ ] Meccanismo di posizionamento Unità di Gioco e Torri come da specifiche
+* [ ] AI che utilizza algoritmo A* (movimento e attacco).
+* [ ] Il gioco funziona a turni e termina quando un giocatore vince
+* [ ] Interfaccia grafica rappresentante lo stato corrente del gioco (turno corrente, vita rimanente di ciascuna unità, Torri conquistate).
+* [ ] Suggerimenti del range di movimento possibile per ciascuna unità cliccando sulla stessa, colorando opportunamente tutte le celle nel range.
+* [ ] Implementazione del meccanismo del danno da contrattacco (guarda "Osservazioni e ulteriori specifiche").
+* [ ] Lista dello storico delle mosse eseguite.
+* [ ] AI che utilizza algoritmi euristici ottimizzati di movimento (diverso da A*).
 
 ## Descrizione dei file principali
 Di seguito è fornita una descrizione dei file principali organizzata per categoria, con dettagli aggiuntivi sui file più rilevanti.
