@@ -27,6 +27,7 @@ AHumanPlayer::AHumanPlayer()
     bHasPlacedSniper = false;
     bHasPlacedBrawler = false;
     bIsShowingMovementRange = false;
+    bFirstUnitHasActed = false;
 }
 
 // Called when the game starts or when spawned
@@ -98,6 +99,8 @@ void AHumanPlayer::OnTurnStart()
 {
 	IsMyTurn = true;
 	UE_LOG(LogTemp, Log, TEXT("HumanPlayer: Il tuo turno"));
+    // Resetto variabile per vedere se la prima unità ha effettuato azioni
+    bFirstUnitHasActed = false;
 
     // Reset delle unità e del turno
     for (TActorIterator<AUnit> It(GetWorld()); It; ++It)
@@ -108,7 +111,7 @@ void AHumanPlayer::OnTurnStart()
             Unit->ResetTurnStatus();
         }
     }
-    GameInstance->SetTurnMessage(TEXT("Il tuo turno, muovi le tue unita'"));
+    GameInstance->SetTurnMessage(TEXT("E' il tuo turno, muovi le tue unita'"));
 }
 
 void AHumanPlayer::OnTurnEnd()
@@ -119,13 +122,13 @@ void AHumanPlayer::OnTurnEnd()
 
 bool AHumanPlayer::PendingTurnActions() const
 {
-    // Se non è il mio turno non ho azioni da fare, return false
+    // Se non è il mio turno, nessuna azione disponibile
     if (!IsMyTurn)
     {
         return false;
     }
 
-    // Se sono in fase di piazzamento controllo se ho piazzato tutte le unità
+    // Fase piazzamento
     if (ATBS_GameMode* GM = Cast<ATBS_GameMode>(GetWorld()->GetAuthGameMode()))
     {
         if (GM->bPlacementPhase)
@@ -134,22 +137,27 @@ bool AHumanPlayer::PendingTurnActions() const
         }
     }
 
-    // TODO: sistemare turno senza attacco
-    // Dopo fase di piazzamento controllo se le unità hanno mosso/attaccato
+    // Controllo se le unità hanno sia mosso che attaccato (allora fine turno automatica, return false)
+    int32 UnitsCompleted = 0;
+    int32 TotalUnits = 0;
+
     for (TActorIterator<AUnit> It(GetWorld()); It; ++It)
     {
         AUnit* Unit = *It;
         if (Unit && Unit->OwnerPlayerID == PlayerID && Unit->IsAlive())
         {
-            // Se entrambi i bool sono false allora return true perché ho azioni disponibili da fare
-            if (!Unit->bHasMovedThisTurn && !Unit->bHasAttackedThisTurn)
+            TotalUnits++;
+
+            // Se ha mosso e attaccato allora aggiungo l'unità
+            if (Unit->bHasMovedThisTurn && Unit->bHasAttackedThisTurn)
             {
-                return true;
+                UnitsCompleted++;
             }
         }
     }
-    // Altrimenti false
-    return false;
+
+    // Se tutte hanno completato return false, altrimenti ci sono ancora azioni disponibili da fare quindi ritorno true
+    return (UnitsCompleted < TotalUnits);
 }
 
 void AHumanPlayer::SelectUnit(AUnit* Unit)
@@ -162,6 +170,20 @@ void AHumanPlayer::SelectUnit(AUnit* Unit)
 
     ATBS_GameMode* GM = Cast<ATBS_GameMode>(GetWorld()->GetAuthGameMode());
     if (!GM || !GM->GField) return;
+
+    // Se bFirstUnitHasActed è true allora posso selezionare solo l'altra unità che deve ancora muovere/attaccare
+    if (bFirstUnitHasActed)
+    {
+        // Se provo a selezionare un'unità che ha già mosso o attaccato allora messaggio
+        if (Unit->bHasMovedThisTurn || Unit->bHasAttackedThisTurn)
+        {
+            if (GameInstance)
+            {
+                GameInstance->SetTurnMessage(TEXT("Non puoi selezionare un'unita' che ha gia' mosso o attaccato!"));
+            }
+            return;
+        }
+    }
 
     // Se clicco sulla stessa unità devo nascondere il range di movimento se è già mostrato, altrimento lo mostro
     if (SelectedUnit == Unit)
@@ -246,14 +268,14 @@ void AHumanPlayer::SelectUnit(AUnit* Unit)
         }
         else if (Unit->bHasAttackedThisTurn)
         {
-            StatusMsg = TEXT("(ha gia' attaccato, puo' muovere)");
+            StatusMsg = TEXT("(ha gia' attaccato)");
         }
         else
         {
             StatusMsg = TEXT("(pronta)");
         }
 
-        GameInstance->SetTurnMessage(FString::Printf(TEXT("Unita': %s %s - Clicca di nuovo per toggle range"), *Unit->GetName(), *StatusMsg));
+        GameInstance->SetTurnMessage(FString::Printf(TEXT("Unita': %s %s"), *Unit->GetName(), *StatusMsg));
     }
 }
 
@@ -402,8 +424,32 @@ void AHumanPlayer::OnClick()
                 {
                     NewTile->HighlightTile(true);
                 }
+                // Blocco unità
+                bFirstUnitHasActed = true;
+                int32 UnitsActed = 0;
+                for (TActorIterator<AUnit> It(GetWorld()); It; ++It)
+                {
+                    AUnit* U = *It;
+                    if (U && U->OwnerPlayerID == PlayerID && U->IsAlive())
+                    {
+                        if (U->bHasMovedThisTurn || U->bHasAttackedThisTurn)
+                        {
+                            UnitsActed++;
+                        }
+                    }
+                }
 
-                // Controlla fine turno
+                // Messaggio diverso se è la prima o seconda unità
+                if (UnitsActed == 1)
+                {
+                    GameInstance->SetTurnMessage(TEXT("Unita' mossa - Attacca o seleziona la seconda unita'"));
+                }
+                else if (UnitsActed == 2)
+                {
+                    GameInstance->SetTurnMessage(TEXT("Unita' mossa - Attacca o usa il bottone per terminare"));
+                }
+
+                // Controllo fine turno
                 CheckAndEndTurnIfComplete();
             }
             else
@@ -438,13 +484,26 @@ void AHumanPlayer::OnClick()
                 int32 Damage = SelectedUnit->CalculateDamage();
                 HitUnit->ApplyDamage(Damage);
                 UE_LOG(LogTemp, Log, TEXT("Attacco riuscito"));
-                GameInstance->SetTurnMessage(FString::Printf(TEXT("Attacco, danno: %d"), Damage));
+                GameInstance->SetTurnMessage(FString::Printf(TEXT("Attacco riuscito! Danno: %d"), Damage));
 
                 // Nascondo range movimento
                 HideMovementRange();
-                // Devo deselezionare l'unità dopo l'attacco perché per specifiche se attacco non posso effettuare movimento
+
+                FVector2D AttackerPos = SelectedUnit->GetCurrentGridPosition();
+                ATile* AttackerTile = GM->GField->GetTileAtPosition(FMath::RoundToInt(AttackerPos.X), FMath::RoundToInt(AttackerPos.Y));
+                if (AttackerTile)
+                {
+                    AttackerTile->HighlightTile(false);
+                }
+
+                // Blocco unità
+                bFirstUnitHasActed = true;
+                UE_LOG(LogTemp, Log, TEXT("HumanPlayer: Prima unita' ha attaccato ora bloccata"));
+
                 SelectedUnit = nullptr;
-                // Controllo se ci sono azioni rimanenti
+
+                GameInstance->SetTurnMessage(FString::Printf(TEXT("Attacco riuscito! Danno: %d"), Damage));
+
                 CheckAndEndTurnIfComplete();
             }
             else
@@ -507,80 +566,42 @@ void AHumanPlayer::SelectBrawlerForPlacement()
 void AHumanPlayer::CheckAndEndTurnIfComplete()
 {
     ATBS_GameMode* GM = Cast<ATBS_GameMode>(GetWorld()->GetAuthGameMode());
-    if (!GM || GM->bPlacementPhase)
-    {
-        return;
-    }
+    if (!GM || GM->bPlacementPhase) return;
 
-    // Creo un array con tutte le unità vive e uso TActorIterator per poi aggiungerle
-    TArray<AUnit*> AliveUnits;
-    for (TActorIterator<AUnit> It(GetWorld()); It; ++It)
+    // Chiamo PendingTurnActions() per controllare se il turno è finito
+    if (!PendingTurnActions())
     {
-        AUnit* Unit = *It;
-        if (Unit && Unit->OwnerPlayerID == PlayerID && Unit->IsAlive())
-        {
-            AliveUnits.Add(Unit);
-        }
-    }
-    // Se zero faccio return
-    if (AliveUnits.Num() == 0)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("HumanPlayer: Nessuna unità viva!"));
-        return;
-    }
-
-    UE_LOG(LogTemp, Log, TEXT("HumanPlayer: Controllo unità - Totali: %d"), AliveUnits.Num());
-
-    // Controllo se tutte le unità vive si sono mosse
-    bool bAllUnitsActed = true;
-    for (AUnit* Unit : AliveUnits)
-    {
-        // Una unità completa il suo turno se si è mossa, ha attaccato oppure entrambi
-        bool bHasActed = Unit->bHasMovedThisTurn || Unit->bHasAttackedThisTurn;
-
-        if (!bHasActed)
-        {
-            bAllUnitsActed = false;
-            UE_LOG(LogTemp, Log, TEXT("  - %s: Non ha ancora effettuato azioni"), *Unit->GetName());
-        }
-        else
-        {
-            UE_LOG(LogTemp, Log, TEXT("  - %s: Ha agito (Mosso: %s, Attaccato: %s)"),
-                *Unit->GetName(),
-                Unit->bHasMovedThisTurn ? TEXT("SI") : TEXT("NO"),
-                Unit->bHasAttackedThisTurn ? TEXT("SI") : TEXT("NO"));
-        }
-    }
-
-    // Se le unità si sono mosse/hanno attaccato allora termino il turno
-    if (bAllUnitsActed)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("HumanPlayer: Tutte le unità hanno agito! Termino turno automaticamente"));
+        UE_LOG(LogTemp, Warning, TEXT("HumanPlayer: Tutte le unità completate - Fine turno automatica"));
 
         if (GameInstance)
         {
-            GameInstance->SetTurnMessage(TEXT("Tutte le unita' hanno agito - Turno AI..."));
+            GameInstance->SetTurnMessage(TEXT("Turno completato"));
         }
 
-        // Nascondo range movimento
         HideMovementRange();
 
         if (SelectedUnit)
         {
             FVector2D UnitPos = SelectedUnit->GetCurrentGridPosition();
-            ATile* UnitTile = GM->GField->GetTileAtPosition(FMath::RoundToInt(UnitPos.X), FMath::RoundToInt(UnitPos.Y));
+            ATile* UnitTile = GM->GField->GetTileAtPosition(
+                FMath::RoundToInt(UnitPos.X),
+                FMath::RoundToInt(UnitPos.Y)
+            );
             if (UnitTile)
             {
                 UnitTile->HighlightTile(false);
             }
         }
 
-        // Deseleziono l'unità
         SelectedUnit = nullptr;
+        bFirstUnitHasActed = false;
 
-        // Delay di 1 secondo per passare al turno AI
+        // Fine turno
         FTimerHandle TimerHandle;
-        GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this, GM]() {GM->TurnNextPlayer(PlayerID);}, 1.0f, false);
+        GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this, GM]()
+            {
+                GM->TurnNextPlayer(PlayerID);
+            }, 1.5f, false);
     }
 }
 
@@ -631,4 +652,83 @@ void AHumanPlayer::HideMovementRange()
 
     HighlightedMovementTiles.Empty();
     bIsShowingMovementRange = false;
+}
+
+void AHumanPlayer::EndTurnWithoutAttack()
+{
+    ATBS_GameMode* GM = Cast<ATBS_GameMode>(GetWorld()->GetAuthGameMode());
+    if (!GM || GM->bPlacementPhase || !IsMyTurn) return;
+
+    UE_LOG(LogTemp, Warning, TEXT("HumanPlayer: Turno terminato senza attaccare (bottone)"));
+
+    HideMovementRange();
+
+    if (SelectedUnit)
+    {
+        FVector2D UnitPos = SelectedUnit->GetCurrentGridPosition();
+        ATile* UnitTile = GM->GField->GetTileAtPosition(FMath::RoundToInt(UnitPos.X), FMath::RoundToInt(UnitPos.Y));
+        if (UnitTile)
+        {
+            UnitTile->HighlightTile(false);
+        }
+    }
+
+    SelectedUnit = nullptr;
+    bFirstUnitHasActed = false;
+
+    if (GameInstance)
+    {
+        GameInstance->SetTurnMessage(TEXT("Turno terminato"));
+    }
+
+    // Passa al turno AI
+    GM->TurnNextPlayer(PlayerID);
+}
+
+bool AHumanPlayer::ShowEndTurnButton() const
+{
+    if (!IsMyTurn) return false;
+
+    ATBS_GameMode* GM = Cast<ATBS_GameMode>(GetWorld()->GetAuthGameMode());
+    if (!GM || GM->bPlacementPhase) return false;
+
+    // Conta unità che hanno agito
+    int32 UnitsActed = 0;
+    int32 TotalUnits = 0;
+    bool bAtLeastOneOnlyMoved = false;
+
+    for (TActorIterator<AUnit> It(GetWorld()); It; ++It)
+    {
+        AUnit* Unit = *It;
+        if (Unit && Unit->OwnerPlayerID == PlayerID && Unit->IsAlive())
+        {
+            TotalUnits++;
+
+            if (Unit->bHasMovedThisTurn || Unit->bHasAttackedThisTurn)
+            {
+                UnitsActed++;
+            }
+
+            // Almeno una ha solo mosso (senza attaccare)
+            if (Unit->bHasMovedThisTurn && !Unit->bHasAttackedThisTurn)
+            {
+                bAtLeastOneOnlyMoved = true;
+            }
+        }
+    }
+
+    // Mostro il bottone se:
+    // -Entrambe le unità hanno agito
+    // -Almeno una ha solo mosso
+    // -Ci sono ancora azioni disponibili da fare
+    bool bShouldShow = (UnitsActed == TotalUnits && bAtLeastOneOnlyMoved && PendingTurnActions());
+
+    UE_LOG(LogTemp, Log, TEXT("ShowEndTurnButton: UnitsActed=%d, TotalUnits=%d, OnlyMoved=%s, Pending=%s -> %s"),
+        UnitsActed, TotalUnits,
+        bAtLeastOneOnlyMoved ? TEXT("SI") : TEXT("NO"),
+        PendingTurnActions() ? TEXT("SI") : TEXT("NO"),
+        bShouldShow ? TEXT("MOSTRA") : TEXT("NASCONDI")
+    );
+
+    return bShouldShow;
 }

@@ -73,6 +73,10 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Unit")
 	bool bIsShowingMovementRange;
 
+	// Se la prima unità selezionata ha effettuato azioni
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Turn")
+	bool bFirstUnitHasActed;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -89,26 +93,34 @@ public:
 	virtual void OnLose() override;
 
 	// called on left mouse click (binding)
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void OnClick();
 
 	// Funzione per selezione Sniper
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void SelectSniperForPlacement();
 
 	// Funzione per selezione Brawler
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void SelectBrawlerForPlacement();
 
 	// Funzione per controllare se tutte le unità si sono mosse, se si termino turno
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void CheckAndEndTurnIfComplete();
 
 	// Funzione per mostrare range movimento
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void ShowMovementRange(AUnit* Unit);
 
 	// Funzione per nascondere range movimento
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void HideMovementRange();
+
+	// Funzione per terminare il turno senza attaccare chiamata dal bottone HUD
+	UFUNCTION(BlueprintCallable)
+	void EndTurnWithoutAttack();
+
+	// Funzione per vedere se mostrare il bottone termina turno senza attaccare
+	UFUNCTION(BlueprintCallable)
+	bool ShowEndTurnButton() const;
 };
