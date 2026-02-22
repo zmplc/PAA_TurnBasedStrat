@@ -266,7 +266,6 @@ void ATile::ShowMovementOverlay(bool bShow)
 		FLinearColor OverlayColor = OriginalColor * 0.8f + FLinearColor::White * 0.2f;
 		DynamicMaterial->SetVectorParameterValue(TEXT("TileColor"), OverlayColor);
 
-		UE_LOG(LogTemp, Log, TEXT("Tile (%d,%d): Overlay movimento attivo"), FMath::RoundToInt(TileGridPosition.X), FMath::RoundToInt(TileGridPosition.Y));
 	}
 	else
 	{

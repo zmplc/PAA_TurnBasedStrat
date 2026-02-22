@@ -68,7 +68,6 @@ public:
     virtual void OnTurnStart() override;
     virtual void OnTurnEnd() override;
     virtual void PerformTurnActions() override;
-    virtual bool PendingTurnActions() const override;
     virtual void OnWin() override;
     virtual void OnLose() override;
 
@@ -79,6 +78,27 @@ public:
     // Funzione per trovare una tile valida per il piazzamento in modo randomico in Y=22,23,24
     UFUNCTION()
     ATile* FindRandomValidTile(AGameField* GameField);
+
+    // Di seguito definisco le funzioni per implementare algoritmo A* per movimento e attacco come da specifiche
+    // Funzione per trovare percorso da tile start a tile obiettivo
+    UFUNCTION()
+    TArray<FIntPoint> FindPathAStar(FIntPoint Start, FIntPoint Goal, AGameField* GameField);
+
+    // Funzione per trovare il nemico più vicino da attaccare
+    UFUNCTION()
+    AUnit* FindClosestEnemy();
+
+    // Funzione per trovare la torre libera più vicina da conquistare
+    UFUNCTION()
+    ATile* FindClosestFreeTower(AGameField* GameField);
+
+    // Funzione per decidere il target prioritario (se torre vicina scelgo torre)
+    UFUNCTION()
+    FIntPoint DecideTarget(AUnit* Unit, AGameField* GameField);
+
+    // Prossima mossa per arrivare al target usando algoritmo A*
+    UFUNCTION()
+    FIntPoint NextMoveTowardsTarget(AUnit* Unit, FIntPoint TargetPos, AGameField* GameField);
 
 private:
     FTimerHandle AI_TurnTimerHandle;

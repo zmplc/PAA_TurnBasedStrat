@@ -722,13 +722,5 @@ bool AHumanPlayer::ShowEndTurnButton() const
     // -Almeno una ha solo mosso
     // -Ci sono ancora azioni disponibili da fare
     bool bShouldShow = (UnitsActed == TotalUnits && bAtLeastOneOnlyMoved && PendingTurnActions());
-
-    UE_LOG(LogTemp, Log, TEXT("ShowEndTurnButton: UnitsActed=%d, TotalUnits=%d, OnlyMoved=%s, Pending=%s -> %s"),
-        UnitsActed, TotalUnits,
-        bAtLeastOneOnlyMoved ? TEXT("SI") : TEXT("NO"),
-        PendingTurnActions() ? TEXT("SI") : TEXT("NO"),
-        bShouldShow ? TEXT("MOSTRA") : TEXT("NASCONDI")
-    );
-
     return bShouldShow;
 }

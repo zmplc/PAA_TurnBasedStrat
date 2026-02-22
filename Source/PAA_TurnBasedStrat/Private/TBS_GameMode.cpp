@@ -228,7 +228,6 @@ void ATBS_GameMode::StartTurn(int32 PlayerID)
 		if (UTBS_GameInstance* GI = GetGameInstance<UTBS_GameInstance>())
 		{
 			GI->SetTurnOwner(TEXT("Turno: Giocatore"));
-			GI->SetTurnMessage(TEXT("Muovi le tue unita'"));
 		}
 	}
 	else if (PlayerID == 1 && RandomPlayer.GetInterface())
@@ -238,7 +237,6 @@ void ATBS_GameMode::StartTurn(int32 PlayerID)
 		if (UTBS_GameInstance* GI = GetGameInstance<UTBS_GameInstance>())
 		{
 			GI->SetTurnOwner(TEXT("Turno: AI"));
-			GI->SetTurnMessage(TEXT("L'AI sta pensando..."));
 		}
 	}
 

@@ -6,6 +6,7 @@
 #include "TBS_GameMode.h"
 #include "Unit.h"
 #include "Tile.h"
+#include "EngineUtils.h"
 
 // Sets default values
 ARandomPlayer::ARandomPlayer()
@@ -71,9 +72,20 @@ void ARandomPlayer::OnPlacementTurnStart()
 void ARandomPlayer::OnTurnStart()
 {
 	IsMyTurn = true;
-	UE_LOG(LogTemp, Log, TEXT("RandomPlayer: Il mio turno"));
+	UE_LOG(LogTemp, Log, TEXT("RandomPlayer: Turno AI"));
+	// Reset delle unità e del turno
+	for (TActorIterator<AUnit> It(GetWorld()); It; ++It)
+	{
+		AUnit* Unit = *It;
+		if (Unit && Unit->OwnerPlayerID == PlayerID && Unit->IsAlive())
+		{
+			Unit->ResetTurnStatus();
+		}
+	}
+	GameInstance->SetTurnMessage(TEXT("L'AI sta pensando alle sue prossime mosse..."));
 
-	// TODO: da fare logica movimento e attacco
+	// Dopo timer di 1,5s faccio partire le mosse dell'AI
+	GetWorld()->GetTimerManager().SetTimer(AI_TurnTimerHandle, this, &ARandomPlayer::PerformTurnActions, 1.5f, false);
 }
 
 void ARandomPlayer::OnTurnEnd()
@@ -84,11 +96,129 @@ void ARandomPlayer::OnTurnEnd()
 
 void ARandomPlayer::PerformTurnActions()
 {
-}
+	ATBS_GameMode* GM = Cast<ATBS_GameMode>(GetWorld()->GetAuthGameMode());
+	if (!GM || !GM->GField) return;
 
-bool ARandomPlayer::PendingTurnActions() const
-{
-	return false;
+	UE_LOG(LogTemp, Log, TEXT("RandomPlayer: Inizio esecuzione azioni dell'AI"));
+
+	// Trovo tutte le unità vive dell'AI
+	TArray<AUnit*> AiUnits;
+	for (TActorIterator<AUnit> It(GetWorld()); It; ++It)
+	{
+		AUnit* Unit = *It;
+		if (Unit && Unit->OwnerPlayerID == PlayerID && Unit->IsAlive())
+		{
+			AiUnits.Add(Unit);
+		}
+	}
+	// Controllo se ci sono le unità
+	if (AiUnits.Num() == 0)
+	{
+		if (GameInstance)
+		{
+			GameInstance->SetTurnMessage(TEXT("AI: Nessuna unita' viva"));
+		}
+		GM->TurnNextPlayer(PlayerID);
+		return;
+	}
+
+	// Ora devo dividere le possibili azioni: chiamo DecideTarget per decidere se andare verso torre o nemico
+	// Poi chiamo NextMoveTowardsTarget per calcolare la prossima mossa usando A*
+	// Poi muovo l'unità
+	// Poi attacco nemico con meno hp se in range
+	// Infine termino il turno e passo a HumanPlayer sempre usando un timer
+
+	// Per ogni unità in AiUnits
+	for (AUnit* Unit : AiUnits)
+	{
+		UE_LOG(LogTemp, Log, TEXT("RandomPlayer: Considero unità %s"), *Unit->GetName());
+
+		// DecideTarget per decidere se andare verso torre o nemico
+		FIntPoint TargetPos = DecideTarget(Unit, GM->GField);
+		// Se la posizione del target rimane (-1,-1) vuol dire che non sto considerando nessun target
+		if (TargetPos.X == -1 || TargetPos.Y == -1)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: Nessun target per %s"), *Unit->GetName());
+			continue;
+		}
+
+		// Calcolo la prossima mossa per arrivare al target usando algoritmo A* (ricordo che in NextMoveTowardsTarget chiamo FindPathAStar)
+		FIntPoint NextMove = NextMoveTowardsTarget(Unit, TargetPos, GM->GField);
+		// Se la posizione del target rimane (-1,-1) vuol dire che non c'è nessuna mossa valida verso il target
+		if (NextMove.X == -1 || NextMove.Y == -1)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: Nessuna mossa valida per %s"), *Unit->GetName());
+			continue;
+		}
+
+		// Muovo l'unità
+		FVector2D CurrentPos = Unit->GetCurrentGridPosition();
+		// Converto la posizione corrente dell'unità per confrontarla
+		FIntPoint CurrentIntPos(FMath::RoundToInt(CurrentPos.X), FMath::RoundToInt(CurrentPos.Y));
+		// Se non sono già sul target muovo l'unità
+		if (NextMove != CurrentIntPos)
+		{
+			if (Unit->CanMoveTo(NextMove.X, NextMove.Y, GM->GField))
+			{
+				Unit->MoveTo(NextMove.X, NextMove.Y, GM->GField);
+				UE_LOG(LogTemp, Log, TEXT("RandomPlayer: %s mosso a (%d, %d)"), *Unit->GetName(), NextMove.X, NextMove.Y);
+
+				if (GameInstance)
+				{
+					GameInstance->SetTurnMessage(FString::Printf(TEXT("AI: %s si muove"), *Unit->GetName()));
+				}
+			}
+		}
+
+		// Se un nemico è in range l'AI lo attacca
+		// Salvo in una rray i nemici da attaccare, controllo se è attaccabile con la funzione CanAttack
+		TArray<AUnit*> EnemiesInRange;
+		for (TActorIterator<AUnit> It(GetWorld()); It; ++It)
+		{
+			AUnit* Enemy = *It;
+			if (Enemy && Enemy->OwnerPlayerID != PlayerID && Enemy->IsAlive())
+			{
+				if (Unit->CanAttack(Enemy, GM->GField))
+				{
+					EnemiesInRange.Add(Enemy);
+				}
+			}
+		}
+		if (EnemiesInRange.Num() > 0)
+		{
+			// Attacco il nemico con meno punti vita
+			AUnit* Target = EnemiesInRange[0];
+			for (AUnit* Enemy : EnemiesInRange)
+			{
+				if (Enemy->CurrentHealth < Target->CurrentHealth)
+				{
+					Target = Enemy;
+				}
+			}
+			// Calcolo il danno e poi lo applico
+			int32 Damage = Unit->CalculateDamage();
+			Target->ApplyDamage(Damage);
+
+			UE_LOG(LogTemp, Log, TEXT("RandomPlayer: %s attacca %s (danno: %d)"), *Unit->GetName(), *Target->GetName(), Damage);
+			if (GameInstance)
+			{
+				GameInstance->SetTurnMessage(FString::Printf(TEXT("AI: %s attacca!"), *Unit->GetName()));
+			}
+		}
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("RandomPlayer: Fine turno"));
+	if (GameInstance)
+	{
+		GameInstance->SetTurnMessage(TEXT("Turno AI completato"));
+	}
+
+	// Passo al turno di HumanPlayer dopo 1.5s
+	FTimerHandle EndTurnTimer;
+	GetWorld()->GetTimerManager().SetTimer(EndTurnTimer, [this, GM]()
+		{
+			GM->TurnNextPlayer(PlayerID);
+		}, 1.5f, false);
 }
 
 void ARandomPlayer::OnWin()
@@ -279,4 +409,465 @@ ATile* ARandomPlayer::FindRandomValidTile(AGameField* GameField)
 
 	UE_LOG(LogTemp, Error, TEXT("RandomPlayer: Nessuna tile valida trovata nella zona Y=22,23,24"));
 	return nullptr;
+}
+
+// Implemento A* per trovare il percorso per arrivare alla destinazione
+// Ho usato fonti wikipedia e RedBlobGames
+TArray<FIntPoint> ARandomPlayer::FindPathAStar(FIntPoint Start, FIntPoint Goal, AGameField* GameField)
+{
+	if (!GameField) return TArray<FIntPoint>();
+
+	// Definisco la struttura per un generico nodo A*
+	struct FPathNode
+	{
+		// Posizione nodo (X,Y)
+		FIntPoint Position;
+		// Costo per arrivare al nodo dal punto di partenza
+		int32 GCost;
+		// Quanta distanza manca per arrivare alla destinazione
+		int32 HCost;
+		// Costo totale stimato (somma di G e H)
+		int32 FCost;
+		// Punto da dove sono arrivatro per poter ricostruire il percorso
+		FIntPoint Parent;
+
+		FPathNode() : Position(0, 0), GCost(0), HCost(0), FCost(0), Parent(-1, -1) {}
+		FPathNode(FIntPoint Pos, int32 G, int32 H, FIntPoint Par)
+			: Position(Pos), GCost(G), HCost(H), FCost(G + H), Parent(Par) { }
+	};
+
+	// Lista nodi da esplorare
+	TArray<FPathNode> OpenList;
+	// Lista nodi già esplorati
+	TArray<FIntPoint> ClosedList;
+	// Tutti i nodi, così tengo traccia dei nodi parent già visitati
+	TMap<FIntPoint, FPathNode> AllNodes;
+
+	// Aggiungo il nodo iniziale
+	int32 StartH = FMath::Abs(Goal.X - Start.X) + FMath::Abs(Goal.Y - Start.Y);
+	FPathNode StartNode(Start, 0, StartH, FIntPoint(-1, -1));
+	OpenList.Add(StartNode);
+	AllNodes.Add(Start, StartNode);
+
+	// Loop principale
+	while (OpenList.Num() > 0)
+	{
+		// Trovo il nodo con FCost più basso
+		int32 BestIndex = 0;
+		for (int32 i = 1; i < OpenList.Num(); i++)
+		{
+			// Devo però considerare il caso in cui FCost sia uguale, allora scelgo quello con HCost più basso
+			if (OpenList[i].FCost < OpenList[BestIndex].FCost ||
+				(OpenList[i].FCost == OpenList[BestIndex].FCost && 
+					OpenList[i].HCost < OpenList[BestIndex].HCost))
+			{
+				// Salvo l'indice del nodo migliore
+				BestIndex = i;
+			}
+		}
+
+		// Salvo la posizione corrispondente al nodo trovato aggiungendolo alla ClosedList
+		FPathNode Current = OpenList[BestIndex];
+		OpenList.RemoveAt(BestIndex);
+		ClosedList.Add(Current.Position);
+
+		// Se la tile corrente è il goal vuol dire che sono arrivato a destinazione
+		if (Current.Position == Goal)
+		{
+			// Se sono arrivato alla destinazione allora ricostruisco il percorso
+			// Devo inizializzare un array vuoto Path per salvare il percorso partendo dal Goal e tornando alla tile di partenza (Start)
+			TArray<FIntPoint> Path;
+			FIntPoint Step = Goal;
+
+			// Siccome devo tornare a Start uso while e metto (-1,-1) che sarebbe il parent di Start, ovvero nessun parent perché è la partenza
+			// così una volta raggiunto (-1,-1) esce dal while
+			while (Step.X != -1 && Step.Y != -1)
+			{
+				// Metto Step nell'array del percorso (il primo step sarà la destinazione come da inizializzazione)
+				Path.Insert(Step, 0);
+
+				// Trovo il parent di Step
+				if (AllNodes.Contains(Step))
+				{
+					// Salvo in Step il nodo corrente, in questo modo torno indietro fino ad arrivare a Start
+					Step = AllNodes[Step].Parent;
+				}
+				else
+				{
+					// Se non trovo il parent esco dal while
+					break;
+				}
+			}
+
+			// Faccio return del percorso trovato
+			UE_LOG(LogTemp, Log, TEXT("RandomPlayer: Percorso A-Star trovato con %d step"), Path.Num());
+			return Path;
+		}
+
+		// Guardo le tile adiacenti
+		TArray<FIntPoint> Neighbors = {
+			FIntPoint(Current.Position.X + 1, Current.Position.Y),
+			FIntPoint(Current.Position.X - 1, Current.Position.Y),
+			FIntPoint(Current.Position.X, Current.Position.Y + 1),
+			FIntPoint(Current.Position.X, Current.Position.Y - 1)
+		};
+
+		// Per ogni tile adiacente trovata devo effettuare i soliti controlli
+		for (const FIntPoint& Neighbor : Neighbors)
+		{
+			// Se sono dentro il GameField
+			if (Neighbor.X < 0 || Neighbor.X >= GameField->GridSizeX ||
+				Neighbor.Y < 0 || Neighbor.Y >= GameField->GridSizeY)
+			{
+				continue;
+			}
+
+			// Se è già nella lista ClosedList, ovvero nodi già visitati
+			if (ClosedList.Contains(Neighbor))
+			{
+				continue;
+			}
+
+			// Se è una tile non camminabile
+			ATile* NeighborTile = GameField->GetTileAtPosition(Neighbor.X, Neighbor.Y);
+			if (!NeighborTile || !NeighborTile->IsWalkable())
+			{
+				continue;
+			}
+
+			// Dopo i controlli posso calcolare il nuovo GCost e HCost
+			int32 NewGCost = Current.GCost + 1; // aggiungo +1 devo considerare questa nuova tile che percorro
+			int32 HCost = FMath::Abs(Goal.X - Neighbor.X) + FMath::Abs(Goal.Y - Neighbor.Y);
+
+			// Controllo se è nella OpenList, ovvero nodi ancora da esplorare
+			bool bInOpenList = false;
+			for (int32 i = 0; i < OpenList.Num(); i++)
+			{
+				if (OpenList[i].Position == Neighbor)
+				{
+					// Se c'è metto true
+					bInOpenList = true;
+					if (NewGCost < OpenList[i].GCost)
+					{
+						// Aggiorno il nodo perché ho trovato GCost migliore
+						// Quindi update nuovo GCost, ricalcolo FCost, aggiorno il parent con la posizione corrente del nodo e infine salvo nella mappa AllNodes
+						OpenList[i].GCost = NewGCost;
+						OpenList[i].FCost = NewGCost + OpenList[i].HCost;
+						OpenList[i].Parent = Current.Position;
+						AllNodes[Neighbor] = OpenList[i];
+					}
+					// Allora posso uscire dal for
+					break;
+				}
+			}
+
+			// Se non è nella OpenList allora lo creo e lo aggiungo nella lista (sia OpenList sia nella mappa AllNodes)
+			if (!bInOpenList)
+			{
+				FPathNode NewNode(Neighbor, NewGCost, HCost, Current.Position);
+				OpenList.Add(NewNode);
+				AllNodes.Add(Neighbor, NewNode);
+			}
+		}
+	}
+
+	// Nessun percorso trovato
+	UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: Nessun percorso trovato da (%d,%d) a (%d,%d)"),
+		Start.X, Start.Y, Goal.X, Goal.Y);
+	return TArray<FIntPoint>();
+}
+
+AUnit* ARandomPlayer::FindClosestEnemy()
+{
+	// Inizializzo qual è il ClosestEnemy come nullptr e la distanza minima che la setto al massimo, intanto poi la sovrascrivo e la uso nell'if
+	AUnit* ClosestEnemy = nullptr;
+	int32 MinDistance = INT_MAX;
+
+	// Trovo qual è il centro delle unità dell'AI
+	FVector2D AiCenter(0, 0);
+	int32 AiUnitCount = 0;
+	// Se ho ad esempio Sniper in (5,22) e Brawler in (12,23) allora MyCenter sarà (5+7,22+23) con MyUnitCount=2 a fine for
+	for (TActorIterator<AUnit> It(GetWorld()); It; ++It)
+	{
+		AUnit* Unit = *It;
+		if (Unit && Unit->OwnerPlayerID == PlayerID && Unit->IsAlive())
+		{
+			AiCenter += Unit->GetCurrentGridPosition();
+			AiUnitCount++;
+		}
+	}
+	// Controllo per errore nel caso non ci fosserò unità
+	if (AiUnitCount == 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: Nessuna unita' viva"));
+		return nullptr;
+	}
+	// Qui siccome voglio trovare la posizione media divido AiCenter per il numero di unità
+	AiCenter /= AiUnitCount;
+
+	// Trova il nemico più vicino a AiCenter
+	// Quello che faccio è considerare tutti gli actor che non sono di RandomPlayer e sono vivi
+	for (TActorIterator<AUnit> It(GetWorld()); It; ++It)
+	{
+		AUnit* Enemy = *It;
+		if (Enemy && Enemy->OwnerPlayerID != PlayerID && Enemy->IsAlive())
+		{
+			// Se li trovo prendo la loro posizione sulla griglia
+			FVector2D EnemyPos = Enemy->GetCurrentGridPosition();
+			// Poi calcolo la distanza Manhattan (come ho fatto per la funzione sopra per il path) dall'AiCenter
+			int32 Distance = FMath::Abs(EnemyPos.X - AiCenter.X) + FMath::Abs(EnemyPos.Y - AiCenter.Y);
+			// Se la Distance è minore di MinDistance allora setto come ClosestEnemy il nemico che sto considerando
+			if (Distance < MinDistance)
+			{
+				MinDistance = Distance;
+				ClosestEnemy = Enemy;
+			}
+		}
+	}
+	// Se lo trovo salvo posizione
+	if (ClosestEnemy)
+	{
+		FVector2D Pos = ClosestEnemy->GetCurrentGridPosition();
+		UE_LOG(LogTemp, Log, TEXT("RandomPlayer: Nemico più vicino trovato a (%d, %d), distanza: %d"), FMath::RoundToInt(Pos.X), FMath::RoundToInt(Pos.Y), MinDistance);
+	}
+	// Altrimenti mando log e l'Ai deve passare il turno
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: Nessun nemico trovato"));
+	}
+	// Faccio return del nemico
+	return ClosestEnemy;
+}
+
+ATile* ARandomPlayer::FindClosestFreeTower(AGameField* GameField)
+{
+	// Uso lo stesso ragionamento di FindClosestEnemy ma metto le torri libere: calcolo AiCenter e poi trovo torre libera
+	if (!GameField) return nullptr;
+
+	// Inizializzo ClosestTower e MinDistance
+	ATile* ClosestTower = nullptr;
+	int32 MinDistance = INT_MAX;
+
+	// Trovo qual è il centro delle unità dell'AI
+	FVector2D AiCenter(0, 0);
+	int32 AiUnitCount = 0;
+
+	for (TActorIterator<AUnit> It(GetWorld()); It; ++It)
+	{
+		AUnit* Unit = *It;
+		if (Unit && Unit->OwnerPlayerID == PlayerID && Unit->IsAlive())
+		{
+			AiCenter += Unit->GetCurrentGridPosition();
+			AiUnitCount++;
+		}
+	}
+	// Controllo per errore nel caso non ci fosserò unità
+	if (AiUnitCount == 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: Nessuna unita' viva"));
+		return nullptr;
+	}
+	// Qui siccome voglio trovare la posizione media divido AiCenter per il numero di unità
+	AiCenter /= AiUnitCount;
+
+	// Cerco tutte le torri presenti nella griglia
+	for (int32 Y = 0; Y < GameField->GridSizeY; Y++)
+	{
+		for (int32 X = 0; X < GameField->GridSizeX; X++)
+		{
+			ATile* Tile = GameField->GetTileAtPosition(X, Y);
+
+			// Se una torre è libera
+			if (Tile && Tile->GetTileType() == ETileType::TOWER)
+			{
+				// TODO: implementare meccanisco conquista torri
+				// if (Tile->GetControllingPlayerID() == -1)
+
+				// Per test considero tutte le torri come libere
+				FVector2D TowerPos = Tile->GetGridPosition();
+
+				// Calcolo la distanza Manhattan(come ho fatto per la funzione sopra per il path) dall'AiCenter
+				int32 Distance = FMath::Abs(TowerPos.X - AiCenter.X) + FMath::Abs(TowerPos.Y - AiCenter.Y);
+
+				if (Distance < MinDistance)
+				{
+					MinDistance = Distance;
+					ClosestTower = Tile;
+				}
+			}
+		}
+	}
+	// Se la trovo salvo posizione
+	if (ClosestTower)
+	{
+		FVector2D Pos = ClosestTower->GetGridPosition();
+		UE_LOG(LogTemp, Log, TEXT("RandomPlayer: Torre libera più vicina trovata a (%d, %d), distanza: %d"), FMath::RoundToInt(Pos.X), FMath::RoundToInt(Pos.Y), MinDistance);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: Nessuna torre libera trovata"));
+	}
+
+	return ClosestTower;
+}
+
+FIntPoint ARandomPlayer::DecideTarget(AUnit* Unit, AGameField* GameField)
+{
+	// In questa funzione decido cosa fa l'AI in base alla priorità
+	// Siccome da specifiche:
+	// "L'AI deve valutare non solo la distanza dal nemico, ma anche la Priorità Torri, se una torre è libera e vicina l'AI deve tentare di conquistarla"
+	if (!Unit || !GameField) return FIntPoint(-1, -1);
+
+	FVector2D UnitPos = Unit->GetCurrentGridPosition();
+
+	// Cerco la torre libera più vicina chiamando la funzione
+	ATile* ClosestTower = FindClosestFreeTower(GameField);
+	int32 DistanceToTower = INT_MAX;
+
+	if (ClosestTower)
+	{
+		// Salvo la distanza
+		FVector2D TowerPos = ClosestTower->GetGridPosition();
+		DistanceToTower = FMath::Abs(TowerPos.X - UnitPos.X) + FMath::Abs(TowerPos.Y - UnitPos.Y);
+	}
+
+	// Cerco il nemico più vicino chiamando la funzione
+	AUnit* ClosestEnemy = FindClosestEnemy();
+	int32 DistanceToEnemy = INT_MAX;
+
+	if (ClosestEnemy)
+	{
+		// Salvo la distanza
+		FVector2D EnemyPos = ClosestEnemy->GetCurrentGridPosition();
+		DistanceToEnemy = FMath::Abs(EnemyPos.X - UnitPos.X) + FMath::Abs(EnemyPos.Y - UnitPos.Y);
+	}
+
+	// Ora faccio il confronto fra le distanze, se la distanza dalla torre è minore della distanza dal nemico allora vado dalla torre
+
+	// Se c'è una torre più vicina del nemico vado dalla torre
+	if (ClosestTower && DistanceToTower < DistanceToEnemy)
+	{
+		FVector2D TowerPos = ClosestTower->GetGridPosition();
+
+		UE_LOG(LogTemp, Log, TEXT("RandomPlayer: %s priorita' TORRE a (%d, %d), distanza: %d (nemico: %d)"),
+			*Unit->GetName(),
+			FMath::RoundToInt(TowerPos.X),
+			FMath::RoundToInt(TowerPos.Y),
+			DistanceToTower,
+			DistanceToEnemy);
+		// Return della posizione della torre
+		return FIntPoint(FMath::RoundToInt(TowerPos.X), FMath::RoundToInt(TowerPos.Y));
+	}
+	// Altrimenti devo considerare il nemico
+	else if (ClosestEnemy)
+	{
+		FVector2D EnemyPos = ClosestEnemy->GetCurrentGridPosition();
+
+		UE_LOG(LogTemp, Log, TEXT("RandomPlayer: %s priorita' NEMICO a (%d, %d), distanza: %d (torre: %d)"),
+			*Unit->GetName(),
+			FMath::RoundToInt(EnemyPos.X),
+			FMath::RoundToInt(EnemyPos.Y),
+			DistanceToEnemy,
+			DistanceToTower == INT_MAX ? -1 : DistanceToTower);
+		// Return della posizione del nemico
+		return FIntPoint(FMath::RoundToInt(EnemyPos.X), FMath::RoundToInt(EnemyPos.Y));
+	}
+
+	// Se non ci sono target disponibili faccio il return a (-1,-1)
+	UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: Nessun target disponibile per %s"), *Unit->GetName());
+	return FIntPoint(-1, -1);
+}
+
+FIntPoint ARandomPlayer::NextMoveTowardsTarget(AUnit* Unit, FIntPoint TargetPos, AGameField* GameField)
+{
+	if (!Unit || !GameField) return FIntPoint(-1, -1);
+
+	// Salvo posizione corrente dell'unità
+	FVector2D CurrentPos = Unit->GetCurrentGridPosition();
+	FIntPoint Start(FMath::RoundToInt(CurrentPos.X), FMath::RoundToInt(CurrentPos.Y));
+
+	// Se il target non è valido allora restituisco errore
+	if (TargetPos.X == -1 || TargetPos.Y == -1)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: Errore target non valido"));
+		return FIntPoint(-1, -1);
+	}
+
+	// Chiamo la funzione FindPathAStar per usare A* per trovare il percorso verso TargetPos
+	TArray<FIntPoint> Path = FindPathAStar(Start, TargetPos, GameField);
+	// Se il path == 0 vuol dire che non è stato trovato nessun percorso
+	if (Path.Num() == 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: Nessun percorso trovato per %s verso (%d, %d)"), *Unit->GetName(), TargetPos.X, TargetPos.Y);
+		return FIntPoint(-1, -1);
+	}
+
+	// NOTA: il path include la posizione corrente salvato dell'unità come primo elemento, DEVO RIMUOVERLA
+	// Rimuovo in index 0
+	if (Path.Num() > 0 && Path[0] == Start)
+	{
+		Path.RemoveAt(0);
+	}
+	// Se dopo aver rimosso il primo elemento ho 0 vuol dire che sono già su TargetPos
+	if (Path.Num() == 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: %s e' già sul target"), *Unit->GetName());
+		// Faccio return di Start
+		return Start;
+	}
+
+	// Trovo le tile che sono raggiungibili chiamando la funzione GetReachableTiles
+	TArray<FIntPoint> ReachableTiles = Unit->GetReachableTiles(GameField);
+	// Trovo la tile che è più lontana nell'array delle tile raggiungibili
+	// Inizializzo BestMove che è la tile migliore che l'AI può raggiungere ovvero quella più lontana raggiungibile
+	FIntPoint BestMove = Start;
+	// Inizializzo l'indice relativo alla BestMove
+	int32 BestIndex = -1;
+	// Per ogni indice in Path devo salvare la tile che è più lontana raggiungibile
+	for (int32 i = 0; i < Path.Num(); i++)
+	{
+		if (ReachableTiles.Contains(Path[i]))
+		{
+			// Salvo BestMove e BestIndex
+			BestMove = Path[i];
+			BestIndex = i;
+		}
+		else
+		{
+			// Se non è raggiungibile esco dal for e tengo la tile salvata
+			break;
+		}
+	}
+	
+	// Se BestIndex è ancora -1 vuol dire che non è stata trovata nessuna tile raggiungibile in path
+	// Questo è il caso in cui nel percorso ci sono i seguenti ostacoli: unità nemiche (quelle di HumanPlayer) e le torri
+	if (BestIndex == -1)
+	{
+		// Nessuna tile del percorso è raggiungibile, muovi verso la prima del percorso
+		UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: Non si puo' raggiungere il percorso A-star"))
+		// Trovo la tile più vicina alla prima tile in Path che è raggiungibile
+		FIntPoint FirstPathTile = Path[0];
+		int32 MinDistance = INT_MAX;
+		FIntPoint ClosestReachable = Start;
+
+		// Faccio il for e applico lo stesso procedimento con Distance e MinDistance
+		for (const FIntPoint& Reachable : ReachableTiles)
+		{
+			int32 Distance = FMath::Abs(FirstPathTile.X - Reachable.X) + FMath::Abs(FirstPathTile.Y - Reachable.Y);
+			if (Distance < MinDistance)
+			{
+				MinDistance = Distance;
+				ClosestReachable = Reachable;
+			}
+		}
+		// Scansionate tutte salvo come BestMove la tile più vicina che è raggiungibile senza ostacoli
+		BestMove = ClosestReachable;
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("RandomPlayer: %s muove verso (%d, %d), target finale: (%d, %d)"),
+		*Unit->GetName(),
+		BestMove.X, BestMove.Y,
+		TargetPos.X, TargetPos.Y);
+
+	return BestMove;
 }
