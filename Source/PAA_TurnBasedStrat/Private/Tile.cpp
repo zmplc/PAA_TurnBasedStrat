@@ -220,7 +220,7 @@ void ATile::BeginPlay()
 	UpdateTileHeight();
 }
 
-void ATile::HighlightTile(bool bHighlight)
+void ATile::HighlightTile(bool bHighlight, FLinearColor HighlightColor)
 {
 	if (!DynamicMaterial) return;
 
@@ -228,8 +228,7 @@ void ATile::HighlightTile(bool bHighlight)
 
 	if (bHighlight)
 	{
-		// Colore HumanPlayer
-		FLinearColor HighlightColor = FLinearColor(0.0f, 1.0f, 1.0f);
+		// Colore highlight della tile selezionata con due colori diversi per HumanPlayer e AI
 		DynamicMaterial->SetVectorParameterValue(TEXT("TileColor"), HighlightColor);
 	}
 	else

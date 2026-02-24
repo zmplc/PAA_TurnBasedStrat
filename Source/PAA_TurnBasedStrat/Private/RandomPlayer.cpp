@@ -21,8 +21,7 @@ ARandomPlayer::ARandomPlayer()
 	IsMyTurn = false;
 	bHasPlacedSniper = false;
 	bHasPlacedBrawler = false;
-	UE_LOG(LogTemp, Log, TEXT("RandomPlayer: RandomPlayer creato"));
-
+	CurrentUnitTile = nullptr;
 }
 
 // Called when the game starts or when spawned
@@ -128,97 +127,8 @@ void ARandomPlayer::PerformTurnActions()
 	// Poi attacco nemico con meno hp se in range
 	// Infine termino il turno e passo a HumanPlayer sempre usando un timer
 
-	// Per ogni unità in AiUnits
-	for (AUnit* Unit : AiUnits)
-	{
-		UE_LOG(LogTemp, Log, TEXT("RandomPlayer: Considero unità %s"), *Unit->GetName());
-
-		// DecideTarget per decidere se andare verso torre o nemico
-		FIntPoint TargetPos = DecideTarget(Unit, GM->GField);
-		// Se la posizione del target rimane (-1,-1) vuol dire che non sto considerando nessun target
-		if (TargetPos.X == -1 || TargetPos.Y == -1)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: Nessun target per %s"), *Unit->GetName());
-			continue;
-		}
-
-		// Calcolo la prossima mossa per arrivare al target usando algoritmo A* (ricordo che in NextMoveTowardsTarget chiamo FindPathAStar)
-		FIntPoint NextMove = NextMoveTowardsTarget(Unit, TargetPos, GM->GField);
-		// Se la posizione del target rimane (-1,-1) vuol dire che non c'è nessuna mossa valida verso il target
-		if (NextMove.X == -1 || NextMove.Y == -1)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: Nessuna mossa valida per %s"), *Unit->GetName());
-			continue;
-		}
-
-		// Muovo l'unità
-		FVector2D CurrentPos = Unit->GetCurrentGridPosition();
-		// Converto la posizione corrente dell'unità per confrontarla
-		FIntPoint CurrentIntPos(FMath::RoundToInt(CurrentPos.X), FMath::RoundToInt(CurrentPos.Y));
-		// Se non sono già sul target muovo l'unità
-		if (NextMove != CurrentIntPos)
-		{
-			if (Unit->CanMoveTo(NextMove.X, NextMove.Y, GM->GField))
-			{
-				Unit->MoveTo(NextMove.X, NextMove.Y, GM->GField);
-				UE_LOG(LogTemp, Log, TEXT("RandomPlayer: %s mosso a (%d, %d)"), *Unit->GetName(), NextMove.X, NextMove.Y);
-
-				if (GameInstance)
-				{
-					GameInstance->SetTurnMessage(FString::Printf(TEXT("AI: %s si muove"), *Unit->GetName()));
-				}
-			}
-		}
-
-		// Se un nemico è in range l'AI lo attacca
-		// Salvo in una rray i nemici da attaccare, controllo se è attaccabile con la funzione CanAttack
-		TArray<AUnit*> EnemiesInRange;
-		for (TActorIterator<AUnit> It(GetWorld()); It; ++It)
-		{
-			AUnit* Enemy = *It;
-			if (Enemy && Enemy->OwnerPlayerID != PlayerID && Enemy->IsAlive())
-			{
-				if (Unit->CanAttack(Enemy, GM->GField))
-				{
-					EnemiesInRange.Add(Enemy);
-				}
-			}
-		}
-		if (EnemiesInRange.Num() > 0)
-		{
-			// Attacco il nemico con meno punti vita
-			AUnit* Target = EnemiesInRange[0];
-			for (AUnit* Enemy : EnemiesInRange)
-			{
-				if (Enemy->CurrentHealth < Target->CurrentHealth)
-				{
-					Target = Enemy;
-				}
-			}
-			// Calcolo il danno e poi lo applico
-			int32 Damage = Unit->CalculateDamage();
-			Target->ApplyDamage(Damage);
-
-			UE_LOG(LogTemp, Log, TEXT("RandomPlayer: %s attacca %s (danno: %d)"), *Unit->GetName(), *Target->GetName(), Damage);
-			if (GameInstance)
-			{
-				GameInstance->SetTurnMessage(FString::Printf(TEXT("AI: %s attacca!"), *Unit->GetName()));
-			}
-		}
-	}
-
-	UE_LOG(LogTemp, Log, TEXT("RandomPlayer: Fine turno"));
-	if (GameInstance)
-	{
-		GameInstance->SetTurnMessage(TEXT("Turno AI completato"));
-	}
-
-	// Passo al turno di HumanPlayer dopo 1.5s
-	FTimerHandle EndTurnTimer;
-	GetWorld()->GetTimerManager().SetTimer(EndTurnTimer, [this, GM]()
-		{
-			GM->TurnNextPlayer(PlayerID);
-		}, 1.5f, false);
+	// Uso la funzione ProcessUnit perché voglio mostrare (da specifiche) range di movimento delle unità dell'AI quindi ho bisogno di usare dei timer
+	ProcessUnit(AiUnits, 0, GM);
 }
 
 void ARandomPlayer::OnWin()
@@ -870,4 +780,186 @@ FIntPoint ARandomPlayer::NextMoveTowardsTarget(AUnit* Unit, FIntPoint TargetPos,
 		TargetPos.X, TargetPos.Y);
 
 	return BestMove;
+}
+
+void ARandomPlayer::ShowMovementRange(AUnit* Unit, AGameField* GameField)
+{
+	if (!Unit || !GameField) return;
+
+	// Se c'è un range di movimento attivo prima lo disattivo
+	HideMovementRange(GameField);
+
+	UE_LOG(LogTemp, Log, TEXT("RandomPlayer: Mostro range movimento"));
+
+	// Evidenzio la tile dell'unità prima di mostrare il range
+	FVector2D UnitPos = Unit->GetCurrentGridPosition();
+	CurrentUnitTile = GameField->GetTileAtPosition(FMath::RoundToInt(UnitPos.X), FMath::RoundToInt(UnitPos.Y));
+	if (CurrentUnitTile)
+	{
+		FLinearColor AiColor = FLinearColor(0.7f, 0.0f, 1.0f, 1.0f);
+		CurrentUnitTile->HighlightTile(true, AiColor);
+	}
+
+	// Creo l'array delle tile raggiungibili dall'unità
+	TArray<FIntPoint> ReachableTiles = Unit->GetReachableTiles(GameField);
+	// Evidenzio queste tile con la funzione ShowMovementOverlay per ogni tile dell'array
+	for (const FIntPoint& TilePos : ReachableTiles)
+	{
+		ATile* Tile = GameField->GetTileAtPosition(TilePos.X, TilePos.Y);
+		if (Tile)
+		{
+			Tile->ShowMovementOverlay(true);
+			HighlightedMovementTiles.Add(Tile);
+		}
+	}
+}
+
+void ARandomPlayer::HideMovementRange(AGameField* GameField)
+{
+	// Rimuovo l'highlight della tile dell'unità
+	if (CurrentUnitTile && IsValid(CurrentUnitTile))
+	{
+		CurrentUnitTile->HighlightTile(false);
+		CurrentUnitTile = nullptr;
+	}
+
+	// Se non ci sono tile evidenziate non faccio niente
+	if (HighlightedMovementTiles.Num() == 0) return;
+
+	UE_LOG(LogTemp, Log, TEXT("RandomPlayer: Nascondo range movimento"));
+	// Per ogni tile evidenziata rimuovo l'overlay
+	for (ATile* Tile : HighlightedMovementTiles)
+	{
+		if (Tile && IsValid(Tile))
+		{
+			Tile->ShowMovementOverlay(false);
+		}
+	}
+
+	HighlightedMovementTiles.Empty();
+}
+
+// ProcessUnit è una funzione ricorsiva: voglio effettuare la ricorsione per poter mettere i timer tra le unità e lo ShowMovementOverlay
+void ARandomPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATBS_GameMode* GM)
+{
+	if (!GM || !GM->GField) return;
+
+	// Se tutte le unità sono già state considerate faccio finire il turno
+	if (CurrentIndex >= Units.Num())
+	{
+		if (GameInstance)
+		{
+			GameInstance->SetTurnMessage(TEXT("Turno AI completato"));
+		}
+
+		// Nascondo range movimento
+		HideMovementRange(GM->GField);
+
+		// Passo al turno di HumanPlayer dopo 1,5 secondi
+		FTimerHandle EndTurnTimer;
+		GetWorld()->GetTimerManager().SetTimer(EndTurnTimer, [this, GM]()
+			{
+				GM->TurnNextPlayer(PlayerID);
+			}, 1.5f, false);
+		return;
+	}
+
+	// Per ogni unità in AiUnits mostro il suo range di movimento
+	AUnit* Unit = Units[CurrentIndex];
+	UE_LOG(LogTemp, Log, TEXT("RandomPlayer: Considero unità %s"), *Unit->GetName());
+	ShowMovementRange(Unit, GM->GField);
+
+	// Timer 1 secondo e poi faccio eseguire azione all'AI
+	FTimerHandle ActionTimer;
+	GetWorld()->GetTimerManager().SetTimer(ActionTimer, [this, Unit, Units, CurrentIndex, GM]()
+		{
+			// DecideTarget per decidere se andare verso torre o nemico
+			FIntPoint TargetPos = DecideTarget(Unit, GM->GField);
+			// Se la posizione del target rimane (-1,-1) vuol dire che non sto considerando nessun target
+			if (TargetPos.X == -1 || TargetPos.Y == -1)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: Nessun target per %s"), *Unit->GetName());
+
+				// Nascondi range e passa alla prossima unità
+				HideMovementRange(GM->GField);
+				ProcessUnit(Units, CurrentIndex + 1, GM);
+				return;
+			}
+
+			// Calcolo la prossima mossa per arrivare al target usando algoritmo A* (ricordo che in NextMoveTowardsTarget chiamo FindPathAStar)
+			FIntPoint NextMove = NextMoveTowardsTarget(Unit, TargetPos, GM->GField);
+			// Se la posizione del target rimane (-1,-1) vuol dire che non c'è nessuna mossa valida verso il target
+			if (NextMove.X == -1 || NextMove.Y == -1)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: Nessuna mossa valida per %s"), *Unit->GetName());
+
+				HideMovementRange(GM->GField);
+				ProcessUnit(Units, CurrentIndex + 1, GM);
+				return;
+			}
+
+			// Muovo l'unità
+			FVector2D CurrentPos = Unit->GetCurrentGridPosition();
+			// Converto la posizione corrente dell'unità per confrontarla
+			FIntPoint CurrentIntPos(FMath::RoundToInt(CurrentPos.X), FMath::RoundToInt(CurrentPos.Y));
+			// Se non sono già sul target muovo l'unità
+			if (NextMove != CurrentIntPos)
+			{
+				if (Unit->CanMoveTo(NextMove.X, NextMove.Y, GM->GField))
+				{
+					Unit->MoveTo(NextMove.X, NextMove.Y, GM->GField);
+					UE_LOG(LogTemp, Log, TEXT("RandomPlayer: %s mosso a (%d, %d)"), *Unit->GetName(), NextMove.X, NextMove.Y);
+
+					if (GameInstance)
+					{
+						GameInstance->SetTurnMessage(FString::Printf(TEXT("AI: %s si muove"), *Unit->GetName()));
+					}
+				}
+			}
+
+			// Se un nemico è in range l'AI lo attacca
+			// Salvo in una rray i nemici da attaccare, controllo se è attaccabile con la funzione CanAttack
+			TArray<AUnit*> EnemiesInRange;
+			for (TActorIterator<AUnit> It(GetWorld()); It; ++It)
+			{
+				AUnit* Enemy = *It;
+				if (Enemy && Enemy->OwnerPlayerID != PlayerID && Enemy->IsAlive())
+				{
+					if (Unit->CanAttack(Enemy, GM->GField))
+					{
+						EnemiesInRange.Add(Enemy);
+					}
+				}
+			}
+			if (EnemiesInRange.Num() > 0)
+			{
+				// Attacco il nemico con meno punti vita
+				AUnit* Target = EnemiesInRange[0];
+				for (AUnit* Enemy : EnemiesInRange)
+				{
+					if (Enemy->CurrentHealth < Target->CurrentHealth)
+					{
+						Target = Enemy;
+					}
+				}
+				// Calcolo il danno e poi lo applico
+				int32 Damage = Unit->CalculateDamage();
+				Target->ApplyDamage(Damage);
+
+				UE_LOG(LogTemp, Log, TEXT("RandomPlayer: %s attacca %s (danno: %d)"), *Unit->GetName(), *Target->GetName(), Damage);
+				if (GameInstance)
+				{
+					GameInstance->SetTurnMessage(FString::Printf(TEXT("AI: %s attacca!"), *Unit->GetName()));
+				}
+			}
+
+			// Aspetto 0,5 secondi e poi passo alla seconda unità
+			FTimerHandle NextUnitTimer;
+			GetWorld()->GetTimerManager().SetTimer(NextUnitTimer, [this, Units, CurrentIndex, GM]()
+				{
+					HideMovementRange(GM->GField);
+					ProcessUnit(Units, CurrentIndex + 1, GM);
+				}, 0.5f, false);
+
+		}, 1.0f, false);
 }

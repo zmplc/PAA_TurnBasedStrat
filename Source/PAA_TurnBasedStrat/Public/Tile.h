@@ -67,8 +67,8 @@ public:
 	// Funzione update altezza tile
 	void UpdateTileHeight();
 
-	// Funzione per fare l'highlight della tile selezionata
-	void HighlightTile(bool bHighlight);
+	// Funzione per fare l'highlight della tile selezionata con colore di HumanPlayer inizializzato
+	void HighlightTile(bool bHighlight, FLinearColor HighlightColor = FLinearColor(0.0f, 1.0f, 1.0f));
 
 	// Setter per dire che la tile ha una torre
 	void SetHasTower(bool bInHasTower);

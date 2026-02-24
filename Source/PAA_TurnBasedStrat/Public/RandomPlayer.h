@@ -100,7 +100,24 @@ public:
     UFUNCTION()
     FIntPoint NextMoveTowardsTarget(AUnit* Unit, FIntPoint TargetPos, AGameField* GameField);
 
+    // Funzione per mostrare il range di movimento di una unità dell'AI
+    UFUNCTION()
+    void ShowMovementRange(AUnit* Unit, AGameField* GameField);
+
+    // Funzione per nascondere il range di movimento dell'AI
+    UFUNCTION()
+    void HideMovementRange(AGameField* GameField);
+
+    // Funzione per mostrare range movimento con timing delle unità dell'AI
+    UFUNCTION()
+    void ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATBS_GameMode* GM);
+
 private:
     FTimerHandle AI_TurnTimerHandle;
 
+    // Array delle tile evidenziate per range movimento
+    TArray<ATile*> HighlightedMovementTiles;
+
+    // Tile corrente dell'unità per evidenziarla quando viene mostrato il range di movimento
+    ATile* CurrentUnitTile;
 };
