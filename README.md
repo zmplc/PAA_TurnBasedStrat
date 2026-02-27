@@ -58,3 +58,5 @@ Di seguito è fornita una descrizione dei file principali organizzata per catego
 - [Top-down Shooter PNG pack from Kenney.nl](https://kenney.nl/assets/top-down-shooter)
 - [Introduction to the A-star Algorithm from Red Blob Games](https://www.redblobgames.com/pathfinding/a-star/introduction.html)
 - [A-star search algorithm Wikipedia](https://en.wikipedia.org/wiki/A*_search_algorithm#Pseudocode)
+- [Hexagonal Grids - sezione Distances from Red Blob Games](https://www.redblobgames.com/grids/hexagons/#distances)
+- [Chebyshev distance Wikipedia](https://en.wikipedia.org/wiki/Chebyshev_distance)
