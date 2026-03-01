@@ -96,6 +96,10 @@ public:
     UFUNCTION()
     FIntPoint DecideTarget(AUnit* Unit, AGameField* GameField);
 
+    // Funzione per trovare tile camminabili nella zona di cattura
+    UFUNCTION()
+    FIntPoint FindWalkableTileCaptureZone(FVector2D TowerPos, AGameField* GameField);
+
     // Prossima mossa per arrivare al target usando algoritmo A*
     UFUNCTION()
     FIntPoint NextMoveTowardsTarget(AUnit* Unit, FIntPoint TargetPos, AGameField* GameField);

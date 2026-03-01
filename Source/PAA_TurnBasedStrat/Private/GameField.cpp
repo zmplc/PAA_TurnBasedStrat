@@ -6,6 +6,7 @@
 #include "Tile.h"
 #include "Tower.h"
 #include "Containers/Queue.h"
+#include "EngineUtils.h"
 
 // Sets default values
 AGameField::AGameField()
@@ -181,6 +182,8 @@ void AGameField::PlaceTowers()
 
 		if (NewTower)
 		{
+			NewTower->SetGridPosition(FVector2D(X, Y));
+
 			// Uso SetHasTower per dire che la tile ora ha una torre sopra
 			TargetTile->SetHasTower(true);
 
@@ -348,9 +351,11 @@ ATile* AGameField::FindFirstWalkableTile() const
 // Funzione per spawnare la tile in X,Y e con altezza HeightLevel
 ATile* AGameField::SpawnTile(int32 X, int32 Y, int32 HeightLevel)
 {
+	const float Step = TileSpacing + CellPadding;
+
 	const FVector SpawnLocation(
-		X * TileSpacing,
-		Y * TileSpacing,
+		X * Step,
+		Y * Step,
 		0.f
 	);
 
@@ -388,4 +393,20 @@ ATile* AGameField::GetTileAtPosition(int32 X, int32 Y) const
 	}
 
 	return nullptr;
+}
+
+TArray<class ATower*> AGameField::GetTowers()
+{
+	TArray<ATower*> Towers;
+
+	// Ogni torre che trovo nella griglia la aggiungo nell'array
+	for (TActorIterator<ATower> It(GetWorld()); It; ++It)
+	{
+		ATower* Tower = *It;
+		if (Tower)
+		{
+			Towers.Add(Tower);
+		}
+	}
+	return Towers;
 }

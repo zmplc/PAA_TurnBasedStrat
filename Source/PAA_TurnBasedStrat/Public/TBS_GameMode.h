@@ -73,13 +73,13 @@ public:
 	int32 HumanTowersControlled = 0;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game Status")
-	int32 AITowersControlled = 0;
+	int32 AiTowersControlled = 0;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game Status")
 	int32 HumanConsecutiveWithTwoTowers = 0;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game Status")
-	int32 AIConsecutiveWithTwoTowers = 0;
+	int32 AiConsecutiveWithTwoTowers = 0;
 
 	// Contatore turni totali
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game Status")
@@ -122,10 +122,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Game")
 	bool TossCoin();
 
-	// Aggiorno contatori delle torri ogni volta che ne viene conquistata una (contatore legato al PlayerID)
-	UFUNCTION(BlueprintCallable, Category = "Game")
-	void UpdateTowerCount(int32 PlayerID, int32 Delta);
-
 	// Gestione destroy e respawn quando una unità muore
 	UFUNCTION(BlueprintCallable, Category = "Game")
 	void OnUnitDied(AUnit* DeadUnit);
@@ -137,6 +133,14 @@ public:
 	// Funzione per nascondere zona piazzamento
 	UFUNCTION(BlueprintCallable, Category = "Game")
 	void HidePlacementZones();
+
+	// Aggiorno contatori delle torri ogni volta che ne viene conquistata una
+	UFUNCTION(BlueprintCallable, Category = "Game")
+	void UpdateTowerCounts();
+
+	// Funzione per fare il check dello stato delle torri (devo vedere se sono neutrali, sotto controllo o contese)
+	UFUNCTION(BlueprintCallable, Category = "Game")
+	void CheckTowerStatus();
 
 private:
 	FTimerHandle ResetTimerHandle;

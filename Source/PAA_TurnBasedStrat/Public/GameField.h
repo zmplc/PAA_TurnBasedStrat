@@ -53,6 +53,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Grid")
     float TileSpacing = 100.0f;
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Grid")
+    float CellPadding = 10.0f;
+
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Config")
     UConfigData* GridData;
 
@@ -67,6 +70,10 @@ public:
 	// Getter della posizione della tile
     UFUNCTION(BlueprintCallable)
     ATile* GetTileAtPosition(int32 X, int32 Y) const;
+
+    // Getter delle torri presenti nella griglia
+    UFUNCTION(BlueprintCallable)
+    TArray<class ATower*> GetTowers();
 
 protected:
 	// Funzione per spawnare la tile

@@ -16,9 +16,9 @@ ATBS_GameMode::ATBS_GameMode()
 	CurrentPlayer = 0;
 	bPlacementPhase = true;
 	HumanTowersControlled = 0;
-	AITowersControlled = 0;
+	AiTowersControlled = 0;
 	HumanConsecutiveWithTwoTowers = 0;
-	AIConsecutiveWithTwoTowers = 0;
+	AiConsecutiveWithTwoTowers = 0;
 	TurnCounter = 0;
 
 	UE_LOG(LogTemp, Log, TEXT("GameMode creato e inizializzato"));
@@ -261,6 +261,11 @@ void ATBS_GameMode::TurnNextPlayer(int32 PlayerID)
 		UE_LOG(LogTemp, Log, TEXT("EndTurn: fine turno per RandomPlayer"));
 	}
 
+	// Per ogni turno devo: fare un check dello status delle torri, aggiornare i contatori delle torri controllare da HumanPlayer e dall'AI e controllare se qualcuno ha vinto
+	CheckTowerStatus();
+	UpdateTowerCounts();
+	CheckVictoryCondition();
+
 	// Passo al giocatore successivo
 	CurrentPlayer = (CurrentPlayer + 1) % 2;
 	// Incremento contatore turni
@@ -269,8 +274,6 @@ void ATBS_GameMode::TurnNextPlayer(int32 PlayerID)
 
 	// Avvio turno per CurrentPlayer
 	StartTurn(CurrentPlayer);
-	// Controllo vittoria dopo il cambio turno
-	CheckVictoryCondition();
 }
 
 // Controllo se uno dei due player ha vinto
@@ -300,11 +303,11 @@ void ATBS_GameMode::CheckVictoryCondition()
 	}
 
 	// Check per RandomPlayer
-	if (AITowersControlled >= 2)
+	if (AiTowersControlled >= 2)
 	{
-		AIConsecutiveWithTwoTowers++;
-		UE_LOG(LogTemp, Log, TEXT("RandomPlayer controlla %d torri con conquiste consecutive: %d"), AITowersControlled, AIConsecutiveWithTwoTowers);
-		if (AIConsecutiveWithTwoTowers >= 2)
+		AiConsecutiveWithTwoTowers++;
+		UE_LOG(LogTemp, Log, TEXT("RandomPlayer controlla %d torri con conquiste consecutive: %d"), AiTowersControlled, AiConsecutiveWithTwoTowers);
+		if (AiConsecutiveWithTwoTowers >= 2)
 		{
 			// Vittoria
 			UE_LOG(LogTemp, Warning, TEXT("Vittoria RandomPlayer: 2 torri controllate per 2 turni consecutivi"));
@@ -315,27 +318,61 @@ void ATBS_GameMode::CheckVictoryCondition()
 	else
 	{
 		// Altrimento resetto contatore di conquiste consecutive
-		AIConsecutiveWithTwoTowers = 0;
+		AiConsecutiveWithTwoTowers = 0;
 	}
 }
 
-// Update delle torri controllate dai giocatori
-void ATBS_GameMode::UpdateTowerCount(int32 PlayerID, int32 Delta)
+void ATBS_GameMode::UpdateTowerCounts()
 {
-	// Aggiorno contatore del giocatore corretto, Delta è +1 quando conquista e -1 quando perde torre
-	if (PlayerID == 0)
+	if (!GField) return;
+
+	// Getter per ottenere tutte le torri
+	TArray<ATower*> Towers = GField->GetTowers();
+
+	// Inizializzazione contatori
+	int32 NewHumanTowers = 0;
+	int32 NewAiTowers = 0;
+
+	// Per ogni torre controllo se ha stato CONTROLLED, se lo è aggirono i contatori in base al player che la controlla
+	for (ATower* Tower : Towers)
 	{
-		HumanTowersControlled += Delta;
-		UE_LOG(LogTemp, Log, TEXT("UpdateTowerCount: Umano ora controlla %d torri (delta: %d)"), HumanTowersControlled, Delta);
-	}
-	else if (PlayerID == 1)
-	{
-		AITowersControlled += Delta;
-		UE_LOG(LogTemp, Log, TEXT("UpdateTowerCount: AI (RandomPlayer) ora controlla %d torri (delta: %d)"), AITowersControlled, Delta);
+		if (Tower && Tower->GetCurrentStatus() == ETowerStatus::CONTROLLED)
+		{
+			if (Tower->GetControllingPlayerID() == 0)
+			{
+				NewHumanTowers++;
+			}
+			else if (Tower->GetControllingPlayerID() == 1)
+			{
+				NewAiTowers++;
+			}
+		}
 	}
 
-	// Controllo se uno dei player ha vinto
-	CheckVictoryCondition();
+	// Aggiorno le variabili che uso in CheckVictoryCondition
+	HumanTowersControlled = NewHumanTowers;
+	AiTowersControlled = NewAiTowers;
+
+	UE_LOG(LogTemp, Log, TEXT("GameMode: Torri aggiornate - Human: %d, AI: %d"), HumanTowersControlled, AiTowersControlled);
+}
+
+void ATBS_GameMode::CheckTowerStatus()
+{
+	if (!GField) return;
+
+	// Getter per ottenere tutte le torri
+	TArray<ATower*> Towers = GField->GetTowers();
+	
+	// Per ogni torre chiamo CheckCaptureZone per verificare la zona di cattura della torre
+	for (ATower* Tower : Towers)
+	{
+		if (Tower)
+		{
+			Tower->CheckCaptureZone(GField);
+		}
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("GameMode: CheckTowerStatus completato"));
 }
 
 // Se una unità muore devo gestire il respawn della stessa

@@ -6,6 +6,7 @@
 #include "TBS_GameMode.h"
 #include "Unit.h"
 #include "Tile.h"
+#include "Tower.h"
 #include "EngineUtils.h"
 
 // Sets default values
@@ -581,32 +582,34 @@ ATile* ARandomPlayer::FindClosestFreeTower(AGameField* GameField)
 	AiCenter /= AiUnitCount;
 
 	// Cerco tutte le torri presenti nella griglia
-	for (int32 Y = 0; Y < GameField->GridSizeY; Y++)
+	TArray<ATower*> Towers = GameField->GetTowers();
+
+	// Per ogni torre
+	for (ATower* Tower : Towers)
 	{
-		for (int32 X = 0; X < GameField->GridSizeX; X++)
+		if (!Tower) continue;
+
+		// Considero solo le torri neutrali, contesa o sotto controllo dall'AI
+		ETowerStatus TowerState = Tower->GetCurrentStatus();
+		int32 TowerOwner = Tower->GetControllingPlayerID();
+
+		// Se la torre è controllata da HumanPlayer allora non la considero
+		if (TowerState == ETowerStatus::CONTROLLED && TowerOwner == 0)
 		{
-			ATile* Tile = GameField->GetTileAtPosition(X, Y);
+			continue;
+		}
 
-			// Se una torre è libera
-			if (Tile && Tile->GetTileType() == ETileType::TOWER)
-			{
-				// TODO: implementare meccanisco conquista torri
-				// if (Tile->GetControllingPlayerID() == -1)
-
-				// Per test considero tutte le torri come libere
-				FVector2D TowerPos = Tile->GetGridPosition();
-
-				// Calcolo la distanza Manhattan(come ho fatto per la funzione sopra per il path) dall'AiCenter
-				int32 Distance = FMath::Abs(TowerPos.X - AiCenter.X) + FMath::Abs(TowerPos.Y - AiCenter.Y);
-
-				if (Distance < MinDistance)
-				{
-					MinDistance = Distance;
-					ClosestTower = Tile;
-				}
-			}
+		// Se è libera, contesa o sotto controllo dell'AI allora calcolo distanza da AiCenter
+		FVector2D TowerPos = Tower->GetGridPosition();
+		// Calcolo la distanza Manhattan (come ho fatto per la funzione sopra per il path) dall'AiCenter
+		int32 Distance = FMath::Abs(TowerPos.X - AiCenter.X) + FMath::Abs(TowerPos.Y - AiCenter.Y);
+		if (Distance < MinDistance)
+		{
+			MinDistance = Distance;
+			ClosestTower = GameField->GetTileAtPosition(FMath::RoundToInt(TowerPos.X), FMath::RoundToInt(TowerPos.Y));
 		}
 	}
+
 	// Se la trovo salvo posizione
 	if (ClosestTower)
 	{
@@ -633,12 +636,21 @@ FIntPoint ARandomPlayer::DecideTarget(AUnit* Unit, AGameField* GameField)
 	// Cerco la torre libera più vicina chiamando la funzione
 	ATile* ClosestTower = FindClosestFreeTower(GameField);
 	int32 DistanceToTower = INT_MAX;
+	FIntPoint TowerCaptureTarget = FIntPoint(-1, -1);
 
 	if (ClosestTower)
 	{
 		// Salvo la distanza
 		FVector2D TowerPos = ClosestTower->GetGridPosition();
 		DistanceToTower = FMath::Abs(TowerPos.X - UnitPos.X) + FMath::Abs(TowerPos.Y - UnitPos.Y);
+
+		// Devo trovare una tile caminabile nella zona di cattura
+		TowerCaptureTarget = FindWalkableTileCaptureZone(TowerPos, GameField);
+		// Se non trovo nessuna tile camminabile allora la torre non è valida
+		if (TowerCaptureTarget.X == -1)
+		{
+			DistanceToTower = INT_MAX;
+		}
 	}
 
 	// Cerco il nemico più vicino chiamando la funzione
@@ -666,7 +678,7 @@ FIntPoint ARandomPlayer::DecideTarget(AUnit* Unit, AGameField* GameField)
 			DistanceToTower,
 			DistanceToEnemy);
 		// Return della posizione della torre
-		return FIntPoint(FMath::RoundToInt(TowerPos.X), FMath::RoundToInt(TowerPos.Y));
+		return TowerCaptureTarget;
 	}
 	// Altrimenti devo considerare il nemico
 	else if (ClosestEnemy)
@@ -685,6 +697,55 @@ FIntPoint ARandomPlayer::DecideTarget(AUnit* Unit, AGameField* GameField)
 
 	// Se non ci sono target disponibili faccio il return a (-1,-1)
 	UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: Nessun target disponibile per %s"), *Unit->GetName());
+	return FIntPoint(-1, -1);
+}
+
+FIntPoint ARandomPlayer::FindWalkableTileCaptureZone(FVector2D TowerPos, AGameField* GameField)
+{
+	if (!GameField) return FIntPoint(-1, -1);
+
+	// Prendo separate X e Y siccome per zona di cattura devo considerare due tile adiacenti alla torre (anche diagonale)
+	int32 TowerX = FMath::RoundToInt(TowerPos.X);
+	int32 TowerY = FMath::RoundToInt(TowerPos.Y);
+
+	// Creo un array con le posizioni delle tile da controllare intorno alla torre
+	TArray<FIntPoint> CaptureZoneTiles = {
+		// Distanza 1 in tutte le direzioni
+		FIntPoint(TowerX + 1, TowerY),
+		FIntPoint(TowerX - 1, TowerY),
+		FIntPoint(TowerX, TowerY + 1),
+		FIntPoint(TowerX, TowerY - 1),
+		// Distanza 2 in tute le direzioni + diagonali
+		FIntPoint(TowerX + 2, TowerY),
+		FIntPoint(TowerX - 2, TowerY),
+		FIntPoint(TowerX, TowerY + 2),
+		FIntPoint(TowerX, TowerY - 2),
+		// Diagonali
+		FIntPoint(TowerX + 1, TowerY + 1),
+		FIntPoint(TowerX + 1, TowerY - 1),
+		FIntPoint(TowerX - 1, TowerY + 1),
+		FIntPoint(TowerX - 1, TowerY - 1)
+	};
+
+	// Nell'array parto controllando la prima tile e tutte le altre finché non ne trovo una camminabile. Quando la trovo faccio return della posizione
+	for (const FIntPoint& CaptureZoneTile : CaptureZoneTiles)
+	{
+		// Se sono nella griglia allora vado avanti con la funzione altrrimenti esco e vado a quella dopo
+		if (CaptureZoneTile.X < 0 || CaptureZoneTile.X >= GameField->GridSizeX ||
+			CaptureZoneTile.Y < 0 || CaptureZoneTile.Y >= GameField->GridSizeY)
+		{
+			continue;
+		}
+		// Prendo la tile e verifico che sia camminabile
+		ATile* Tile = GameField->GetTileAtPosition(CaptureZoneTile.X, CaptureZoneTile.Y);
+		if (Tile && Tile->IsWalkable())
+		{
+			// Se lo è faccio return
+			return CaptureZoneTile;
+		}
+	}
+	// Se non trovo nessuna tile camminabile faccio log+return (-1,-1)
+	UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: Nessuna tile camminabile trovata vicino alla torre in (%d, %d)"), TowerX, TowerY);
 	return FIntPoint(-1, -1);
 }
 
