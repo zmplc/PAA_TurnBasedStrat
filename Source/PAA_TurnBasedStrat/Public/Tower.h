@@ -49,9 +49,6 @@ public:
 	UPROPERTY()
 	UMaterialInstanceDynamic* DynamicMaterial;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tower")
-	class AGameField* GameField;
-
 	// Inizializzazione stato corrente della torre (da specifiche spawnata NEUTRAL)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Tower")
 	ETowerStatus CurrentStatus = ETowerStatus::NEUTRAL;
