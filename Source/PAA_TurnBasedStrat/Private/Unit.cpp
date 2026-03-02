@@ -4,6 +4,7 @@
 #include "Unit.h"
 #include "GameField.h"
 #include "TBS_GameMode.h"
+#include "TBS_GameInstance.h"
 #include "EngineUtils.h"
 
 // Sets default values
@@ -249,7 +250,55 @@ int32 AUnit::GetMovementCost(int32 FromX, int32 FromY, int32 TargetX, int32 Targ
 // Respawn dell'unità alla posizione iniziale
 void AUnit::RespawnAtInitialPosition()
 {
-	// TODO: devo sistemare humanplayer e fare randomplayer
+	if (!IsValid(this)) return;
+
+	// Resetto la vita al massimo di nuovo
+	CurrentHealth = MaxHealth;
+	// Aggiorno gli HP nell'UI
+	if (UTBS_GameInstance* GI = Cast<UTBS_GameInstance>(GetWorld()->GetGameInstance()))
+	{
+		bool bIsSniper = (UnitType == EUnitType::SNIPER);
+		GI->UpdateUnitHP(OwnerPlayerID, bIsSniper, CurrentHealth);
+	}
+	// Metto l'unità alla posizione iniziale di piazzamento
+	SetCurrentGridPosition(InitialGridPosition);
+
+	// Ottengo la tile di spawn iniziale dal GameField, appena la trovo esco dal for
+	AGameField* GameField = nullptr;
+	for (TActorIterator<AGameField> It(GetWorld()); It; ++It)
+	{
+		GameField = *It;
+		break;
+	}
+	// Definisco la RespawnTile
+	if (GameField)
+	{
+		ATile* RespawnTile = GameField->GetTileAtPosition(FMath::RoundToInt(InitialGridPosition.X),	FMath::RoundToInt(InitialGridPosition.Y));
+		// Se esiste devo piazzare l'unità sulla tile
+		if (RespawnTile)
+		{
+			FVector TileLocation = RespawnTile->GetActorLocation();
+			FVector NewLocation = TileLocation;
+			NewLocation.Z = TileLocation.Z + 150.f;
+			SetActorLocation(NewLocation);
+			// Rendo l'unità di nuovo visibile e riattivo collisioni
+			SetActorHiddenInGame(false);
+			SetActorEnableCollision(true);
+			// Resetto il turno dell'unità
+			bHasMovedThisTurn = false;
+			bHasAttackedThisTurn = false;
+
+			UE_LOG(LogTemp, Log, TEXT("RespawnAtInitialPosition: %s respawnato a (%.0f, %.0f) con %d HP"), *GetName(), InitialGridPosition.X, InitialGridPosition.Y,CurrentHealth);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("RespawnAtInitialPosition: Tile di respawn non trovata"));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("RespawnAtInitialPosition: GameField non trovato"));
+	}
 }
 
 // METODI ATTACCO
@@ -266,7 +315,7 @@ int32 AUnit::CalculateDamage() const
 }
 
 // Sottrazione punti vita dopo attacco subito
-void AUnit::ApplyDamage(int32 DamageAmount)
+void AUnit::ApplyDamage(int32 DamageAmount, AUnit* Attacker, const AGameField* GameField)
 {
 	if (DamageAmount <= 0) return;
 
@@ -274,8 +323,18 @@ void AUnit::ApplyDamage(int32 DamageAmount)
 	CurrentHealth -= DamageAmount;
 	CurrentHealth = FMath::Max(0, CurrentHealth);
 
-	// Log
-	UE_LOG(LogTemp, Log, TEXT("AUnit::TakeDamage - Danno subito: %d, Vita rimanente: %d"), DamageAmount, CurrentHealth);
+	if (UTBS_GameInstance* GI = Cast<UTBS_GameInstance>(GetWorld()->GetGameInstance()))
+	{
+		bool bIsSniper = (UnitType == EUnitType::SNIPER);
+		GI->UpdateUnitHP(OwnerPlayerID, bIsSniper, CurrentHealth);
+	}
+
+	// Se l'unità è ancora viva dopo l'attacco allora può effettuare il danno da contrattacco
+	// Il controattacco però è possibile se l'unità che deve eseguire il controattacco è viva
+	if (CurrentHealth > 0 && Attacker && GameField)
+	{
+		CounterAttack(Attacker, GameField);
+	}
 
 	// Controllo se l'unità è morta
 	if (CurrentHealth <= 0)
@@ -366,6 +425,66 @@ bool AUnit::CanAttack(AUnit* TargetUnit, const AGameField* GameField) const
 
 		UE_LOG(LogTemp, Log, TEXT("CanAttack: Brawler può attaccare"));
 		return true;
+	}
+}
+
+void AUnit::CounterAttack(AUnit* Attacker, const AGameField* GameField)
+{
+	if (!Attacker || !Attacker->IsAlive() || !IsAlive() || !GameField) return;
+
+	// Deve essere uno sniper quindi se non lo è faccio return
+	if (Attacker->UnitType != EUnitType::SNIPER) return;
+
+	// L'unità attaccata può fare il contrattacco se è uno sniper oppure se è un brawler e lo sniper è a distanza 1
+	bool CanCounter = false;
+
+	if (UnitType == EUnitType::SNIPER)
+	{
+		// Sniper vs sniper contrattacca sempre
+		CanCounter = true;
+	}
+	else if (UnitType == EUnitType::BRAWLER)
+	{
+		// Il brawler può attaccare se è a distanza 1
+		FVector2D UnitPos = GetCurrentGridPosition();
+		FVector2D AttackerPos = Attacker->GetCurrentGridPosition();
+
+		int32 DistX = FMath::Abs(FMath::RoundToInt(AttackerPos.X - UnitPos.X));
+		int32 DistY = FMath::Abs(FMath::RoundToInt(AttackerPos.Y - UnitPos.Y));
+		int32 Distance = FMath::Max(DistX, DistY);
+
+		if (Distance <= 1)
+		{
+			CanCounter = true;
+		}
+	}
+	// Se il bool è false allora faccio return perché non è possibile fare il contrattacco
+	if (!CanCounter) return;
+
+	// Ora calcolo i danni del contrattacco: range da 1 a 3
+	int32 CounterDamage = FMath::RandRange(1, 3);
+	// Applico il danno
+	Attacker->CurrentHealth -= CounterDamage;
+	Attacker->CurrentHealth = FMath::Max(0, Attacker->CurrentHealth);
+
+	// Se l'attacker muore dopo il contrattacco
+	if (Attacker->CurrentHealth <= 0)
+	{
+		Attacker->SetActorHiddenInGame(true);
+		Attacker->SetActorEnableCollision(false);
+
+		// Aggiorno gli HP nell'UI
+		if (UTBS_GameInstance* GI = Cast<UTBS_GameInstance>(GetWorld()->GetGameInstance()))
+		{
+			bool bIsSniper = (Attacker->UnitType == EUnitType::SNIPER);
+			GI->UpdateUnitHP(Attacker->OwnerPlayerID, bIsSniper, Attacker->CurrentHealth);
+		}
+
+		// Dopodiché chiamo la funzione della gamemode OnUnitDied per gestire il respawn dell'unità
+		if (ATBS_GameMode* GM = GetWorld()->GetAuthGameMode<ATBS_GameMode>())
+		{
+			GM->OnUnitDied(Attacker);
+		}
 	}
 }
 

@@ -34,6 +34,20 @@ public:
 	UPROPERTY(EditAnywhere, Category = "UI")
 	FString CurrentTurnOwner = "Current Player";
 
+	// Vita unità HumanPlayer
+	UPROPERTY(BlueprintReadWrite, Category = "Unit Stats")
+	int32 HumanSniperHP = 20;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Unit Stats")
+	int32 HumanBrawlerHP = 40;
+
+	// Vita unità AI
+	UPROPERTY(BlueprintReadWrite, Category = "Unit Stats")
+	int32 AiSniperHP = 20;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Unit Stats")
+	int32 AiBrawlerHP = 40;
+
 	// Incremento vittorie HumanPlayer
 	UFUNCTION(BlueprintCallable, Category = "Score")
 	void IncrementScoreHumanPlayer();
@@ -69,4 +83,8 @@ public:
 	// Setter turno
 	UFUNCTION(BlueprintCallable, Category = "UI")
 	void SetTurnOwner(const FString& Owner);
+	
+	// Funzione per aggiornare gli HP delle unità
+	UFUNCTION(BlueprintCallable, Category = "Unit Stats")
+	void UpdateUnitHP(int32 PlayerID, bool bIsSniper, int32 NewHP);
 };

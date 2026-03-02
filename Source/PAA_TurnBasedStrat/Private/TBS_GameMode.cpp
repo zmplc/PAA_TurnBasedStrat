@@ -385,7 +385,7 @@ void ATBS_GameMode::OnUnitDied(AUnit* DeadUnit)
 	}
 
 	// Respawn alla posizione iniziale
-	DeadUnit->RespawnAtInitialPosition(); // TODO: ancora da fare la funzione
+	DeadUnit->RespawnAtInitialPosition();
 }
 
 void ATBS_GameMode::ShowPlacementZones()

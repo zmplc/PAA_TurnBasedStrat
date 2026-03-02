@@ -129,10 +129,13 @@ public:
 	virtual int32 CalculateDamage() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Unit Combat")
-	virtual void ApplyDamage(int32 DamageAmount);
+	virtual void ApplyDamage(int32 DamageAmount, AUnit* Attacker = nullptr, const class AGameField* GameField = nullptr);
 
 	UFUNCTION(BlueprintCallable, Category = "Unit Combat")
 	virtual bool CanAttack(AUnit* TargetUnit, const class AGameField* GameField) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Unit Combat")
+	virtual void CounterAttack(AUnit* Attacker, const class AGameField* GameField);
 
 	UFUNCTION(BlueprintCallable, Category = "Unit Combat")
 	bool IsAlive() const;

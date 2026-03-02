@@ -57,3 +57,31 @@ void UTBS_GameInstance::SetTurnOwner(const FString& Owner)
     CurrentTurnOwner = Owner;
 }
 
+void UTBS_GameInstance::UpdateUnitHP(int32 PlayerID, bool bIsSniper, int32 NewHP)
+{
+	// HumanPlayer
+	if (PlayerID == 0)
+	{
+		if (bIsSniper)
+		{
+			HumanSniperHP = NewHP;
+		}
+		else
+		{
+			HumanBrawlerHP = NewHP;
+		}
+	}
+	// AI
+	else if (PlayerID == 1)
+	{
+		if (bIsSniper)
+		{
+			AiSniperHP = NewHP;
+		}
+		else
+		{
+			AiBrawlerHP = NewHP;
+		}
+	}
+}
+
