@@ -185,7 +185,6 @@ bool AUnit::MoveTo(int32 TargetX, int32 TargetY, AGameField* GameField)
 		UE_LOG(LogTemp, Error, TEXT("MoveTo: TargetTile e' nulla"));
 		return false;
 	}
-	bHasMovedThisTurn = true;
 	return true;
 }
 

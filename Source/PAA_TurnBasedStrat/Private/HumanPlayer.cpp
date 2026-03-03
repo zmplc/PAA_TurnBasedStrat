@@ -137,27 +137,34 @@ bool AHumanPlayer::PendingTurnActions() const
         }
     }
 
-    // Controllo se le unità hanno sia mosso che attaccato (allora fine turno automatica, return false)
-    int32 UnitsCompleted = 0;
-    int32 TotalUnits = 0;
-
+    // Per ogni unità viva di HumanPlayer controllo se ha azioni disponibili da fare
     for (TActorIterator<AUnit> It(GetWorld()); It; ++It)
     {
         AUnit* Unit = *It;
         if (Unit && Unit->OwnerPlayerID == PlayerID && Unit->IsAlive())
         {
-            TotalUnits++;
+            // Devo gestire i casi in cui il turno finisce automaticamente ovvero:
+            // Se ci sono azioni disponibili return true
+            // Se l'unità ha solo mosso e può attaccare mostro il bottone per terminare il turno
+            // Se l'unità ha solo attaccato non può muoversi
 
-            // Se ha mosso e attaccato allora aggiungo l'unità
-            if (Unit->bHasMovedThisTurn && Unit->bHasAttackedThisTurn)
+            // Se l'unità non ha mosso e non ha attaccato allora ci sono azioni disponibili da fare
+            if (!Unit->bHasMovedThisTurn && !Unit->bHasAttackedThisTurn)
             {
-                UnitsCompleted++;
+                return true;
             }
+            // Se l'unità ha solo mosso allora può attaccare
+            if (Unit->bHasMovedThisTurn && !Unit->bHasAttackedThisTurn)
+            {
+                return true;
+            }
+            // Se ha solo attaccato allora non può muoversi oppure ha mosso+attaccato quindi devo fare return false
+            // ma potrebbe esserci la seconda unità da muovere/attaccare quindi continuo il for
         }
     }
 
-    // Se tutte hanno completato return false, altrimenti ci sono ancora azioni disponibili da fare quindi ritorno true
-    return (UnitsCompleted < TotalUnits);
+    // A fine for faccio return false perché vuol dire che termino il turno automaticamente
+    return false;
 }
 
 void AHumanPlayer::SelectUnit(AUnit* Unit)
@@ -384,19 +391,19 @@ void AHumanPlayer::OnClick()
         {
             UE_LOG(LogTemp, Log, TEXT("Clic su tile - movimento"));
 
+            // Se l'unità si è già mossa non può muoversi di nuovo, può solo attaccare, selezionare la seconda unità (se è la prima) o humanplayer può passare il turno
+            if (SelectedUnit->bHasMovedThisTurn)
+            {
+                UE_LOG(LogTemp, Warning, TEXT("Questa unita' ha gia' mosso"));
+                GameInstance->SetTurnMessage(TEXT("Unita' gia' mossa, puo' solo attaccare oppure seleziona un'altra unita'"));
+                return;
+            }
+
             // Se l'unità ha attaccato non può muoversi
             if (SelectedUnit->bHasAttackedThisTurn)
             {
                 UE_LOG(LogTemp, Warning, TEXT("L'unita' ha gia' attaccato, non puo' muoversi"));
                 GameInstance->SetTurnMessage(TEXT("L'unita' ha gia' attaccato, non puo' muoversi"));
-                return;
-            }
-
-            // Controllo se l'unità è stata mossa nel turno
-            if (SelectedUnit->bHasMovedThisTurn)
-            {
-                UE_LOG(LogTemp, Warning, TEXT("Questa unita' ha gia' mosso"));
-                GameInstance->SetTurnMessage(TEXT("Unita' gia' mossa, puo' solo attaccare oppure seleziona un'altra unita'"));
                 return;
             }
 
@@ -408,8 +415,11 @@ void AHumanPlayer::OnClick()
                 HideMovementRange();
                 // Rimuovo highlight tile
                 ATile* OldTile = GM->GField->GetTileAtPosition(FMath::RoundToInt(OldPos.X), FMath::RoundToInt(OldPos.Y));
-                
+                // Muovo l'unità
                 SelectedUnit->MoveTo(TileX, TileY, GM->GField);
+                // Imposto che l'unità è stata mossa questo turno
+                SelectedUnit->bHasMovedThisTurn = true;
+
                 UE_LOG(LogTemp, Log, TEXT("Unita' mossa"));
                 GameInstance->SetTurnMessage(TEXT("Unita' mossa"));
 
@@ -481,8 +491,12 @@ void AHumanPlayer::OnClick()
             }
             if (SelectedUnit->CanAttack(HitUnit, GM->GField))
             {
+                // Calcolo danno
                 int32 Damage = SelectedUnit->CalculateDamage();
+                // Applico il danno calcolato
                 HitUnit->ApplyDamage(Damage);
+                // Imposto che l'unità ha attaccato questo turno
+                SelectedUnit->bHasAttackedThisTurn = true;
                 UE_LOG(LogTemp, Log, TEXT("Attacco riuscito"));
                 GameInstance->SetTurnMessage(FString::Printf(TEXT("Attacco riuscito! Danno: %d"), Damage));
 
@@ -583,10 +597,7 @@ void AHumanPlayer::CheckAndEndTurnIfComplete()
         if (SelectedUnit)
         {
             FVector2D UnitPos = SelectedUnit->GetCurrentGridPosition();
-            ATile* UnitTile = GM->GField->GetTileAtPosition(
-                FMath::RoundToInt(UnitPos.X),
-                FMath::RoundToInt(UnitPos.Y)
-            );
+            ATile* UnitTile = GM->GField->GetTileAtPosition(FMath::RoundToInt(UnitPos.X), FMath::RoundToInt(UnitPos.Y));
             if (UnitTile)
             {
                 UnitTile->HighlightTile(false);
