@@ -42,12 +42,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tower")
 	FLinearColor PlayerAIColor = FLinearColor(0.7f, 0.0f, 1.0f, 1.0f);
 
-	// Colore giallo per torre contesa
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tower")
-	FLinearColor ContestedColor = FLinearColor(0.35f, 0.5f, 1.0f, 1.0f);
-
 	UPROPERTY()
 	UMaterialInstanceDynamic* DynamicMaterial;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Tower")
+	UMaterialInterface* TowerContestedMaterial;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Tower")
+	UMaterialInterface* TowerMaterial;
 
 	// Inizializzazione stato corrente della torre (da specifiche spawnata NEUTRAL)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Tower")

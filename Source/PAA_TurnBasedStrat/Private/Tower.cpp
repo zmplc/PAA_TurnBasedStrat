@@ -27,17 +27,24 @@ void ATower::BeginPlay()
 
 	if (TowerMesh)
 	{
-		UMaterialInterface* BaseMaterial = TowerMesh->GetMaterial(0);
-		if (BaseMaterial)
+		if (!TowerMaterial)
 		{
-			DynamicMaterial = UMaterialInstanceDynamic::Create(BaseMaterial, this);
+			TowerMaterial = TowerMesh->GetMaterial(0);
+		}
+
+		if (TowerMaterial)
+		{
+			DynamicMaterial = UMaterialInstanceDynamic::Create(TowerMaterial, this);
 			TowerMesh->SetMaterial(0, DynamicMaterial);
 
-			// Imposto stato iniziale della torre
+			// Imposto stato iniziale torre come neutrale
 			UpdateTowerStatus(ETowerStatus::NEUTRAL);
 		}
-	}
-	
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("Tower: TowerMaterial e' NULL"));
+		}
+	}	
 }
 
 // Funzione per fare l'update dello stato della torre
@@ -46,40 +53,47 @@ void ATower::UpdateTowerStatus(ETowerStatus NewStatus, int32 NewControllingPlaye
 	CurrentStatus = NewStatus;
 	ControllingPlayerID = NewControllingPlayerID;
 
-	if (DynamicMaterial)
+	if (!TowerMesh) return;
+
+	switch (CurrentStatus)
 	{
-		FLinearColor TargetColor = FLinearColor::White;
-		switch (CurrentStatus)
+	// Stato A: neutrale
+	case ETowerStatus::NEUTRAL:
+		if (TowerMaterial)
 		{
-		// Stato A: neutrale
-		case ETowerStatus::NEUTRAL:
-			TargetColor = NeutralColor;
-			break;
-		// Stato B: sotto controllo
-		case ETowerStatus::CONTROLLED:
-			// Controllato dal player umano
+			DynamicMaterial = UMaterialInstanceDynamic::Create(TowerMaterial, this);
+			TowerMesh->SetMaterial(0, DynamicMaterial);
+			DynamicMaterial->SetVectorParameterValue(FName("TowerColor"), NeutralColor);
+		};
+		break;
+	// Stato B: sotto controllo
+	case ETowerStatus::CONTROLLED:
+		if (TowerMaterial)
+		{
+			DynamicMaterial = UMaterialInstanceDynamic::Create(TowerMaterial, this);
+			TowerMesh->SetMaterial(0, DynamicMaterial);
+			// Assegnazione colore humanplayer
 			if (ControllingPlayerID == 0)
 			{
-				TargetColor = PlayerHumanColor;
+				DynamicMaterial->SetVectorParameterValue(FName("TowerColor"), PlayerHumanColor);
 			}
-			// Controllato da player AI
+			// Assegnazione colore AI
 			else if (ControllingPlayerID == 1)
 			{
-				TargetColor = PlayerAIColor;
+				DynamicMaterial->SetVectorParameterValue(FName("TowerColor"), PlayerAIColor);
 			}
-			break;
-		// Stato C: contesa
-		case ETowerStatus::CONTESTED:
-			TargetColor = ContestedColor;
-			break;
-		default:
-			break;
 		}
-		// Aggiorno il colore della torre con il TargetColor
-		DynamicMaterial->SetVectorParameterValue(FName("TowerColor"), TargetColor);
-	}
-	else {
-		return;
+		break;
+	// Stato C: contesa
+	case ETowerStatus::CONTESTED:
+		if (TowerContestedMaterial)
+		{
+			TowerMesh->SetMaterial(0, TowerContestedMaterial);
+		}
+		break;
+
+	default:
+		break;
 	}
 }
 
