@@ -6,6 +6,7 @@
 #include "HumanPlayer.h"
 #include "RandomPlayer.h"
 #include "EngineUtils.h"
+#include "Blueprint/UserWidget.h"
 
 ATBS_GameMode::ATBS_GameMode()
 {
@@ -95,10 +96,25 @@ void ATBS_GameMode::BeginPlay()
 		return;
 	}
 
-	// Chiamo StartPlacementPhase per vedere se funziona onclick
-	UE_LOG(LogTemp, Warning, TEXT("BeginPlay: StartPlacementPhase chiamata"));
-	StartPlacementPhase();
+	if (HUDWidgetClass)
+	{
+		APlayerController* PC = GetWorld()->GetFirstPlayerController();
+		if (PC)
+		{
+			MainHUDWidget = CreateWidget<UUserWidget>(GetWorld(), HUDWidgetClass);
+			if (MainHUDWidget)
+			{
+				MainHUDWidget->AddToViewport();
+				UE_LOG(LogTemp, Log, TEXT("GameMode: HUD Widget creato e mostrato"));
+			}
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("GameMode: HUDWidgetClass non assegnato!"));
+	}
 	
+	StartPlacementPhase();
 }
 
 // Funzione lancio moneta
@@ -218,7 +234,15 @@ void ATBS_GameMode::OnUnitPlaced(int32 PlayerID)
 // Inizio turno con messaggi gameinstance
 void ATBS_GameMode::StartTurn(int32 PlayerID)
 {
+	// Se la partità è terminata devo bloccare il turno
+	if (bGameEnded) return;
+
 	CurrentPlayer = PlayerID;
+
+	// Per ogni turno devo: fare un check dello status delle torri, aggiornare i contatori delle torri controllare da HumanPlayer e dall'AI e controllare se qualcuno ha vinto
+	CheckTowerStatus();
+	UpdateTowerCounts();
+	CheckVictoryCondition();
 
 	// Chiamo OnTurnStart
 	if (PlayerID == 0 && HumanPlayer.GetInterface())
@@ -247,6 +271,9 @@ void ATBS_GameMode::StartTurn(int32 PlayerID)
 // Turno successivo con messaggi gameinstance
 void ATBS_GameMode::TurnNextPlayer(int32 PlayerID)
 {
+	// Se la partità è terminata devo bloccare il turno
+	if (bGameEnded) return;
+
 	UE_LOG(LogTemp, Log, TEXT("TurnNextPlayer: Fine turno di %d"), CurrentPlayer);
 
 	// Chiamo OnTurnEnd
@@ -260,11 +287,6 @@ void ATBS_GameMode::TurnNextPlayer(int32 PlayerID)
 		RandomPlayer->OnTurnEnd();
 		UE_LOG(LogTemp, Log, TEXT("EndTurn: fine turno per RandomPlayer"));
 	}
-
-	// Per ogni turno devo: fare un check dello status delle torri, aggiornare i contatori delle torri controllare da HumanPlayer e dall'AI e controllare se qualcuno ha vinto
-	CheckTowerStatus();
-	UpdateTowerCounts();
-	CheckVictoryCondition();
 
 	// Passo al giocatore successivo
 	CurrentPlayer = (CurrentPlayer + 1) % 2;
@@ -288,11 +310,10 @@ void ATBS_GameMode::CheckVictoryCondition()
 	{
 		HumanConsecutiveWithTwoTowers++;
 		UE_LOG(LogTemp, Log, TEXT("HumanPlayer controlla %d torri con conquiste consecutive: %d"), HumanTowersControlled, HumanConsecutiveWithTwoTowers);
-		if (HumanConsecutiveWithTwoTowers >= 2)
+		if (HumanConsecutiveWithTwoTowers >= 3)
 		{
-			// Vittoria
-			UE_LOG(LogTemp, Warning, TEXT("Vittoria HumanPlayer: 2 torri controllate per 2 turni consecutivi"));
-			if (HumanPlayer.GetInterface()) HumanPlayer->OnWin();
+			// HumanPlayer vince
+			OnGameEnd(0);
 			return;
 		}
 	}
@@ -306,12 +327,10 @@ void ATBS_GameMode::CheckVictoryCondition()
 	if (AiTowersControlled >= 2)
 	{
 		AiConsecutiveWithTwoTowers++;
-		UE_LOG(LogTemp, Log, TEXT("RandomPlayer controlla %d torri con conquiste consecutive: %d"), AiTowersControlled, AiConsecutiveWithTwoTowers);
-		if (AiConsecutiveWithTwoTowers >= 2)
+		if (AiConsecutiveWithTwoTowers >= 3)
 		{
-			// Vittoria
-			UE_LOG(LogTemp, Warning, TEXT("Vittoria RandomPlayer: 2 torri controllate per 2 turni consecutivi"));
-			if (RandomPlayer.GetInterface()) RandomPlayer->OnWin();
+			// AI vince
+			OnGameEnd(1);
 			return;
 		}
 	}
@@ -320,6 +339,77 @@ void ATBS_GameMode::CheckVictoryCondition()
 		// Altrimento resetto contatore di conquiste consecutive
 		AiConsecutiveWithTwoTowers = 0;
 	}
+}
+
+void ATBS_GameMode::OnGameEnd(int32 WinnerID)
+{
+	// Se la partità è già finita faccio return
+	if (bGameEnded) return;
+
+	UE_LOG(LogTemp, Warning, TEXT("GameMode: Partita terminata - Vincitore: %d"), WinnerID);
+
+	// Imposto la variabile di fine partita a true
+	bGameEnded = true;
+
+	// Subito dopo che la partita finisce devo fermare tutti i timer dell'AI altrimenti continua a fare le sue azioni
+	if (RandomPlayer.GetInterface())
+	{
+		if (ARandomPlayer* RP = Cast<ARandomPlayer>(RandomPlayer.GetObject()))
+		{
+			GetWorld()->GetTimerManager().ClearAllTimersForObject(RP);
+		}
+	}
+
+	// Chiamo OnWin o OnLose in base al WinnerID e per humanplayer e AI
+	if (WinnerID == 0)
+	{
+		if (HumanPlayer.GetInterface())
+		{
+			HumanPlayer->OnWin();
+		}
+		if (RandomPlayer.GetInterface())
+		{
+			RandomPlayer->OnLose();
+		}
+	}
+	else if (WinnerID == 1)
+	{
+		if (HumanPlayer.GetInterface())
+		{
+			HumanPlayer->OnLose();
+		}
+		if (RandomPlayer.GetInterface())
+		{
+			RandomPlayer->OnWin();
+		}
+	}
+
+	if (MainHUDWidget)
+	{
+		UFunction* ShowVictoryFunction = MainHUDWidget->FindFunction(FName("ShowVictoryOverlay"));
+		if (ShowVictoryFunction)
+		{
+			MainHUDWidget->ProcessEvent(ShowVictoryFunction, nullptr);
+			UE_LOG(LogTemp, Log, TEXT("GameMode: ShowVictoryOverlay chiamata con successo"));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("GameMode: Funzione ShowVictoryOverlay non trovata nel Widget!"));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("GameMode: MainHUDWidget è NULL!"));
+	}
+
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+	if (PC)
+	{
+		PC->bShowMouseCursor = true;
+		PC->bEnableClickEvents = true;
+		PC->bEnableMouseOverEvents = true;
+	}
+
 }
 
 void ATBS_GameMode::UpdateTowerCounts()

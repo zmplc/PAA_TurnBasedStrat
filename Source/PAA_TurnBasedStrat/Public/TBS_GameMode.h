@@ -85,6 +85,18 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game Status")
 	int32 TurnCounter = 0;
 
+	// Variabile bool per vedere se la partità è finita
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game Status")
+	bool bGameEnded = false;
+
+	// Lo uso per riferimento al widget per poter chiamare la funzione per mostrare overlay vittoria
+	UPROPERTY()
+	class UUserWidget* MainHUDWidget = nullptr;
+
+	// Classe del widget HUD per poi chiamare la funzione di overlay per vittoria
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<class UUserWidget> HUDWidgetClass;
+
 	// Numero unità piazzate
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Placement")
 	int32 UnitsPlaced = 0;
@@ -117,6 +129,10 @@ public:
 	// Controllo condizione vittoria (un giocatore controlla 2 torri su 3 contemporaneamente per 2 turni consecutivi)
 	UFUNCTION(BlueprintCallable, Category = "Game")
 	void CheckVictoryCondition();
+
+	// Funzione per gestire la fine della partita con l'ID del vincitore
+	UFUNCTION(BlueprintCallable, Category = "Game")
+	void OnGameEnd(int32 WinnerID);
 
 	// Lancio moneta per decidere chi inizia
 	UFUNCTION(BlueprintCallable, Category = "Game")

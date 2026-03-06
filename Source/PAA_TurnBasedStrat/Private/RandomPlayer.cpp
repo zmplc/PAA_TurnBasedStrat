@@ -97,7 +97,7 @@ void ARandomPlayer::OnTurnEnd()
 void ARandomPlayer::PerformTurnActions()
 {
 	ATBS_GameMode* GM = Cast<ATBS_GameMode>(GetWorld()->GetAuthGameMode());
-	if (!GM || !GM->GField) return;
+	if (!GM || !GM->GField || GM->bGameEnded) return;
 
 	UE_LOG(LogTemp, Log, TEXT("RandomPlayer: Inizio esecuzione azioni dell'AI"));
 
@@ -135,13 +135,18 @@ void ARandomPlayer::PerformTurnActions()
 void ARandomPlayer::OnWin()
 {
 	GameInstance->SetTurnMessage(TEXT("L'AI ha vinto la partita!"));
-	UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: Hai vinto la partita!"));
+	
+	// Nel caso di fine partita per RandomPlayer devo annullare tutti i timer attivi e disattivare il range movimento come fatto per HumanPlayer
+	GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
+	HideMovementRange(GetWorld()->GetAuthGameMode<ATBS_GameMode>()->GField);
 }
 
 void ARandomPlayer::OnLose()
 {
 	GameInstance->SetTurnMessage(TEXT("L'AI ha perso la partita!"));
-	UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: Hai perso la partita!"));
+	
+	GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
+	HideMovementRange(GetWorld()->GetAuthGameMode<ATBS_GameMode>()->GField);
 }
 
 void ARandomPlayer::PlaceUnitAutomatically()
@@ -903,7 +908,7 @@ void ARandomPlayer::HideMovementRange(AGameField* GameField)
 // ProcessUnit è una funzione ricorsiva: voglio effettuare la ricorsione per poter mettere i timer tra le unità e lo ShowMovementOverlay
 void ARandomPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATBS_GameMode* GM)
 {
-	if (!GM || !GM->GField) return;
+	if (!GM || !GM->GField|| GM->bGameEnded) return;
 
 	// Se tutte le unità sono già state considerate faccio finire il turno
 	if (CurrentIndex >= Units.Num())
@@ -920,6 +925,8 @@ void ARandomPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATBS_G
 		FTimerHandle EndTurnTimer;
 		GetWorld()->GetTimerManager().SetTimer(EndTurnTimer, [this, GM]()
 			{
+				// Se la partita è finita o non c'è il gamemode return
+				if (!GM || GM->bGameEnded) return;
 				GM->TurnNextPlayer(PlayerID);
 			}, 1.5f, false);
 		return;
@@ -934,6 +941,8 @@ void ARandomPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATBS_G
 	FTimerHandle ActionTimer;
 	GetWorld()->GetTimerManager().SetTimer(ActionTimer, [this, Unit, Units, CurrentIndex, GM]()
 		{
+			// Se la partita è finita o non c'è il gamemode return
+			if (!GM || GM->bGameEnded) return;
 			// DecideTarget per decidere se andare verso torre o nemico
 			FIntPoint TargetPos = DecideTarget(Unit, GM->GField);
 			// Se la posizione del target rimane (-1,-1) vuol dire che non sto considerando nessun target
@@ -1018,6 +1027,8 @@ void ARandomPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATBS_G
 			FTimerHandle NextUnitTimer;
 			GetWorld()->GetTimerManager().SetTimer(NextUnitTimer, [this, Units, CurrentIndex, GM]()
 				{
+					// Se la partita è finita o non c'è il gamemode return
+					if (!GM || GM->bGameEnded) return;
 					HideMovementRange(GM->GField);
 					ProcessUnit(Units, CurrentIndex + 1, GM);
 				}, 0.5f, false);

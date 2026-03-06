@@ -289,11 +289,31 @@ void AHumanPlayer::SelectUnit(AUnit* Unit)
 void AHumanPlayer::OnWin()
 {
 	GameInstance->SetTurnMessage("Hai vinto la partita!");
+
+    // Disabilito input siccome la partita è finita
+    APlayerController* PC = GetWorld()->GetFirstPlayerController();
+    if (PC)
+    {
+        PC->DisableInput(PC);
+        UE_LOG(LogTemp, Log, TEXT("HumanPlayer: Input disabilitato"));
+    }
+    // Nascondo range movimento
+    HideMovementRange();
 }
 
 void AHumanPlayer::OnLose()
 {
-	UE_LOG(LogTemp, Log, TEXT("HumanPlayer: Hai perso la partita"));
+    GameInstance->SetTurnMessage(TEXT("Hai perso la partita!"));
+
+    // Disabilito input siccome la partita è finita
+    APlayerController* PC = GetWorld()->GetFirstPlayerController();
+    if (PC)
+    {
+        PC->DisableInput(PC);
+        UE_LOG(LogTemp, Log, TEXT("HumanPlayer: Input disabilitato"));
+    }
+    // Nascondo range movimento
+    HideMovementRange();
 }
 
 void AHumanPlayer::OnClick()
