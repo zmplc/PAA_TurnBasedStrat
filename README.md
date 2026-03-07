@@ -21,34 +21,26 @@ Di seguito è fornita una descrizione dei file principali organizzata per catego
 
 ### Classi C++
 
-| File           | Tipo  | Descrizione                           | Utilizzo |
-|----------------|-------|---------------------------------------|----------|
-| `Tile .h/.cpp` | Actor | Singola cella della griglia di gioco. |          |
-|                |       |                                       |          |
-|                |       |                                       |          |
+| File           | Tipo  | Descrizione                           |
+|----------------|-------|---------------------------------------|
+| `Tile .h/.cpp` | Actor | Singola cella della griglia di gioco. |
 
 ### Blueprint
 
 | Blueprint | Tipo            |
 |-----------|-----------------|
 | `BP_Tile` | Blueprint Actor |
-|           |                 |
-|           |                 |
 
 ### Materiali
 
 | Materiale | Descrizione                                   |
 |-----------|-----------------------------------------------|
 | `M_Tile`  | Materiale per la singola cella della griglia. |
-|           |                                               |
-|           |                                               |
 
 ### Texture
 
 | Texture | Descrizione |
 |---------|-------------|
-|         |             |
-|         |             |
 |         |             |
 
 ## Risorse utilizzate

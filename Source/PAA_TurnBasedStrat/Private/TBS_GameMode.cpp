@@ -389,17 +389,17 @@ void ATBS_GameMode::OnGameEnd(int32 WinnerID)
 		UFunction* ShowVictoryFunction = MainHUDWidget->FindFunction(FName("ShowVictoryOverlay"));
 		if (ShowVictoryFunction)
 		{
-			MainHUDWidget->ProcessEvent(ShowVictoryFunction, nullptr);
-			UE_LOG(LogTemp, Log, TEXT("GameMode: ShowVictoryOverlay chiamata con successo"));
+			// Devo passare WinnerID come parametro a ShowVictoryOverlay, uso uno struct
+			struct FShowVictoryParams
+			{
+				int32 WinnerID;
+			};
+
+			FShowVictoryParams Params;
+			Params.WinnerID = WinnerID;
+
+			MainHUDWidget->ProcessEvent(ShowVictoryFunction, &Params);
 		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("GameMode: Funzione ShowVictoryOverlay non trovata nel Widget!"));
-		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("GameMode: MainHUDWidget è NULL!"));
 	}
 
 	APlayerController* PC = GetWorld()->GetFirstPlayerController();
