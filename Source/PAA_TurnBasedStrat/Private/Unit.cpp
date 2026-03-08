@@ -502,3 +502,19 @@ void AUnit::ResetTurnStatus()
 	bHasMovedThisTurn = false;
 	bHasAttackedThisTurn = false;
 }
+
+FString AUnit::GridPositionConverter(int32 X, int32 Y)
+{
+	FString Letter;
+	// Per ogni X da 0 a 25 assegno una lettera da A a Z aggiungendo ad "A" il valore di X usando la funzione FString::Chr
+	if (X >= 0 && X < 26)
+	{
+		Letter = FString::Chr('A' + X);
+	}
+
+	// Per il numero è sufficiente prendere dirramente Y e poi convertirlo in stringa nel return
+	int32 Number = Y;
+
+	// Combino lette e numero per ottenere il formato A0
+	return FString::Printf(TEXT("%s%d"), *Letter, Number);
+}

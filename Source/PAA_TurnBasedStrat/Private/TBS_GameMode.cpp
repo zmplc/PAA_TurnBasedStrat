@@ -113,6 +113,13 @@ void ATBS_GameMode::BeginPlay()
 	{
 		UE_LOG(LogTemp, Error, TEXT("GameMode: HUDWidgetClass non assegnato!"));
 	}
+
+	// Reset storico mosse
+	UTBS_GameInstance* GI = GetGameInstance<UTBS_GameInstance>();
+	if (GI)
+	{
+		GI->ClearMoveHistory();
+	}
 	
 	StartPlacementPhase();
 }

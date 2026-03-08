@@ -439,8 +439,20 @@ void AHumanPlayer::OnClick()
                 SelectedUnit->MoveTo(TileX, TileY, GM->GField);
                 // Imposto che l'unità è stata mossa questo turno
                 SelectedUnit->bHasMovedThisTurn = true;
+                
+                // Registro la mossa nello storico
+                if (GameInstance)
+                {
+                    FString MoveHistoryPlayerID = TEXT("HP");
+                    FString MoveHistoryUnitType = (SelectedUnit->UnitType == EUnitType::SNIPER) ? TEXT("S") : TEXT("B");
+                    FString MoveHistoryFromPos = AUnit::GridPositionConverter(FMath::RoundToInt(OldPos.X), FMath::RoundToInt(OldPos.Y));
+                    FString MoveHistoryToPos = AUnit::GridPositionConverter(TileX, TileY);
+                    // Faccio il setup della stringa da passare poi allo storico delle mosse
+                    FString MoveEntry = FString::Printf(TEXT("%s: %s %s -> %s"), *MoveHistoryPlayerID, *MoveHistoryUnitType, *MoveHistoryFromPos, *MoveHistoryToPos);
+                    // Aggiungo la MoveEntry nell'array
+                    GameInstance->AddMoveToHistory(MoveEntry);
+                }
 
-                UE_LOG(LogTemp, Log, TEXT("Unita' mossa"));
                 GameInstance->SetTurnMessage(TEXT("Unita' mossa"));
 
                 if (OldTile)
@@ -517,7 +529,20 @@ void AHumanPlayer::OnClick()
                 HitUnit->ApplyDamage(Damage);
                 // Imposto che l'unità ha attaccato questo turno
                 SelectedUnit->bHasAttackedThisTurn = true;
-                UE_LOG(LogTemp, Log, TEXT("Attacco riuscito"));
+
+                // Registro la mossa nello storico (per l'attacco la entry la chiamo AttackEntry così so distinguere movimento e attacco se fatti nello stesso turno)
+                if (GameInstance)
+                {
+                    FString MoveHistoryPlayerID = TEXT("HP");
+                    FString MoveHistoryUnitType = (SelectedUnit->UnitType == EUnitType::SNIPER) ? TEXT("S") : TEXT("B");
+                    FVector2D MoveHistoryTargetPos = HitUnit->GetCurrentGridPosition();
+                    FString MoveHistoryTargetPosConverted = AUnit::GridPositionConverter(FMath::RoundToInt(MoveHistoryTargetPos.X), FMath::RoundToInt(MoveHistoryTargetPos.Y));
+                    // Faccio il setup della stringa da passare poi allo storico delle mosse
+                    FString AttackEntry = FString::Printf(TEXT("%s: %s %s %d"), *MoveHistoryPlayerID, *MoveHistoryUnitType, *MoveHistoryTargetPosConverted, Damage);
+                    // Aggiungo la AttackEntry nell'array
+                    GameInstance->AddMoveToHistory(AttackEntry);
+                }
+
                 GameInstance->SetTurnMessage(FString::Printf(TEXT("Attacco riuscito! Danno: %d"), Damage));
 
                 // Nascondo range movimento

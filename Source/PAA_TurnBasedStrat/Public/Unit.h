@@ -143,4 +143,7 @@ public:
 	// Metodi per turni
 	UFUNCTION(BlueprintCallable, Category = "Unit Status")
 	virtual void ResetTurnStatus();
+
+	// Funzione per convertire le posizioni delle tile in lettere e numeri (esempio: A0, A1, ecc)
+	static FString GridPositionConverter(int32 X, int32 Y);
 };

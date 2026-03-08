@@ -7,9 +7,18 @@
 #include "TBS_GameInstance.generated.h"
 
 class APawn;
-/**
- * 
- */
+
+// Struct per una singola entry dello storico delle mosse con il relativo testa collegato a attacco/movimento o entrambi
+USTRUCT(BlueprintType)
+struct FMoveHistoryEntry
+{
+	GENERATED_BODY()
+	UPROPERTY(BlueprintReadOnly, Category = "Move History")
+	FString MoveText;
+	FMoveHistoryEntry() : MoveText(TEXT("")) {}
+	FMoveHistoryEntry(const FString& Text) : MoveText(Text) {}
+};
+
 UCLASS()
 class PAA_TURNBASEDSTRAT_API UTBS_GameInstance : public UGameInstance
 {
@@ -47,6 +56,10 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, Category = "Unit Stats")
 	int32 AiBrawlerHP = 40;
+
+	// Storico mosse (metto TArray di struct con la singola entry)
+	UPROPERTY(BlueprintReadOnly, Category = "Move History")
+	TArray<FMoveHistoryEntry> MoveHistory;
 
 	// Incremento vittorie HumanPlayer
 	UFUNCTION(BlueprintCallable, Category = "Score")
@@ -87,4 +100,16 @@ public:
 	// Funzione per aggiornare gli HP delle unità
 	UFUNCTION(BlueprintCallable, Category = "Unit Stats")
 	void UpdateUnitHP(int32 PlayerID, bool bIsSniper, int32 NewHP);
+
+	// Funzione per aggiungere una mossa allo storico delle mosse
+	UFUNCTION(BlueprintCallable, Category = "Move History")
+	void AddMoveToHistory(const FString& MoveText);
+
+	// Getter per ottenere lo storico delle mosse
+	UFUNCTION(BlueprintCallable, Category = "Move History")
+	TArray<FString> GetMoveHistory() const;
+
+	// Funzione per resettare lo storico delle mosse quando finisce la partita
+	UFUNCTION(BlueprintCallable, Category = "Move History")
+	void ClearMoveHistory();
 };

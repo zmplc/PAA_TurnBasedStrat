@@ -977,13 +977,25 @@ void ARandomPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATBS_G
 			{
 				if (Unit->CanMoveTo(NextMove.X, NextMove.Y, GM->GField))
 				{
-					Unit->MoveTo(NextMove.X, NextMove.Y, GM->GField);
-					UE_LOG(LogTemp, Log, TEXT("RandomPlayer: %s mosso a (%d, %d)"), *Unit->GetName(), NextMove.X, NextMove.Y);
+					// Salvo la posizione prima del movimento per entry storico mosse
+					FVector2D OldPos = Unit->GetCurrentGridPosition();
 
+					Unit->MoveTo(NextMove.X, NextMove.Y, GM->GField);
+
+					// Registro la mossa nello storico
 					if (GameInstance)
 					{
-						GameInstance->SetTurnMessage(FString::Printf(TEXT("AI: %s si muove"), *Unit->GetName()));
+						FString MoveHistoryPlayerID = TEXT("AI");
+						FString MoveHistoryUnitType = (Unit->UnitType == EUnitType::SNIPER) ? TEXT("S") : TEXT("B");
+						FString MoveHistoryFromPos = AUnit::GridPositionConverter(FMath::RoundToInt(OldPos.X), FMath::RoundToInt(OldPos.Y));
+						FString MoveHistoryToPos = AUnit::GridPositionConverter(NextMove.X, NextMove.Y);
+						// Faccio il setup della stringa da passare poi allo storico delle mosse
+						FString MoveEntry = FString::Printf(TEXT("%s: %s %s -> %s"), *MoveHistoryPlayerID, *MoveHistoryUnitType, *MoveHistoryFromPos, *MoveHistoryToPos);
+						// Aggiungo la MoveEntry nell'array
+						GameInstance->AddMoveToHistory(MoveEntry);
 					}
+
+					GameInstance->SetTurnMessage(FString::Printf(TEXT("AI: %s si muove"), *Unit->GetName()));
 				}
 			}
 
@@ -1016,11 +1028,20 @@ void ARandomPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATBS_G
 				int32 Damage = Unit->CalculateDamage();
 				Target->ApplyDamage(Damage);
 
-				UE_LOG(LogTemp, Log, TEXT("RandomPlayer: %s attacca %s (danno: %d)"), *Unit->GetName(), *Target->GetName(), Damage);
+				// Registro la mossa nello storico (per l'attacco la entry la chiamo AttackEntry così so distinguere movimento e attacco se fatti nello stesso turno)
 				if (GameInstance)
 				{
-					GameInstance->SetTurnMessage(FString::Printf(TEXT("AI: %s attacca!"), *Unit->GetName()));
+					FString MoveHistoryPlayerID = TEXT("AI");
+					FString MoveHistoryUnitType = (Unit->UnitType == EUnitType::SNIPER) ? TEXT("S") : TEXT("B");
+					FVector2D MoveHistoryTargetPos = Target->GetCurrentGridPosition();
+					FString MoveHistoryTargetPosConverted = AUnit::GridPositionConverter(FMath::RoundToInt(MoveHistoryTargetPos.X), FMath::RoundToInt(MoveHistoryTargetPos.Y));
+					// Faccio il setup della stringa da passare poi allo storico delle mosse
+					FString AttackEntry = FString::Printf(TEXT("%s: %s %s %d"), *MoveHistoryPlayerID, *MoveHistoryUnitType, *MoveHistoryTargetPosConverted, Damage);
+					// Aggiungo la AttackEntry nell'array
+					GameInstance->AddMoveToHistory(AttackEntry);
 				}
+
+				GameInstance->SetTurnMessage(FString::Printf(TEXT("AI: %s attacca!"), *Unit->GetName()));
 			}
 
 			// Aspetto 0,5 secondi e poi passo alla seconda unità

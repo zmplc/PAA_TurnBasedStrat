@@ -85,3 +85,32 @@ void UTBS_GameInstance::UpdateUnitHP(int32 PlayerID, bool bIsSniper, int32 NewHP
 	}
 }
 
+void UTBS_GameInstance::AddMoveToHistory(const FString& MoveText)
+{
+	// Esempio di testo per storico: HP: S B4 -> D6
+	// Creo entry per array
+	FMoveHistoryEntry Entry(MoveText);
+	// Aggiungo l'entry creata
+	MoveHistory.Add(Entry);
+}
+
+TArray<FString> UTBS_GameInstance::GetMoveHistory() const
+{
+	// Ho bisogno di questa funzione per passare al widget solo un array di stringhe siccome non accetta una struct
+	// Creo array vuoto per mettere dentro i testi delle mosse
+	TArray<FString> Result;
+	// Per ogni entry salvato in MoveHistory prendo il suo testo e lo metto in Result
+	for (const FMoveHistoryEntry& Entry : MoveHistory)
+	{
+		Result.Add(Entry.MoveText);
+	}
+	// Faccio return di array Result
+	return Result;
+}
+
+void UTBS_GameInstance::ClearMoveHistory()
+{
+	// Svuoto l'array
+	MoveHistory.Empty();
+}
+
