@@ -33,15 +33,27 @@ Di seguito è fornita una descrizione dei file principali organizzata per catego
 
 ### Materiali
 
-| Materiale | Descrizione                                   |
-|-----------|-----------------------------------------------|
-| `M_Tile`  | Materiale per la singola cella della griglia. |
+| Materiale          | Descrizione                                                       |
+|--------------------|-------------------------------------------------------------------|
+| `M_Brawler_AI`     | Materiale per brawler AI                                          |
+| `M_Brawler_Human`  | Materiale per brawler HumanPlayer                                 |
+| `M_Floor`          | Materiale per sfondo livello                                      |
+| `M_Sniper_AI`      | Materiale per sniper AI                                           |
+| `M_Sniper_Human`   | Materiale per sniper HumanPlayer                                  |
+| `M_Tile`           | Materiale per la singola cella della griglia                      |
+| `M_Tower`          | Materiale per la torre                                            |
+| `M_TowerContested` | Materiale per la torre contesa, con i colori di entrambi i player |
 
 ### Texture
 
-| Texture | Descrizione |
-|---------|-------------|
-|         |             |
+| Texture               | Descrizione                                     |
+|-----------------------|-------------------------------------------------|
+| `T_Brawler_AI`        | Brawler robot per AI                            |
+| `T_Brawler_Human`     | Brawler umano per HumanPlayer                   |
+| `T_FloorLevel`        | Texture immagine dello spazio usata come sfondo |
+| `T_Sniper_AI`         | Sniper robot per AI                             |
+| `T_Sniper_Human`      | Sniper umano per HumanPlayer                    |
+| `T_VictoryBackground` | Texture immagine per schermata vittoria         |
 
 ## Risorse utilizzate
 - [Documentazione ufficiale Unreal Engine 5.6](https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-5-6-documentation?application_version=5.6)
