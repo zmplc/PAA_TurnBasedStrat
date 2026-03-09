@@ -112,4 +112,7 @@ public:
 	// Funzione per resettare lo storico delle mosse quando finisce la partita
 	UFUNCTION(BlueprintCallable, Category = "Move History")
 	void ClearMoveHistory();
+
+	UFUNCTION(BlueprintCallable, Category = "UI")
+	void ResetGame();
 };

@@ -114,3 +114,12 @@ void UTBS_GameInstance::ClearMoveHistory()
 	MoveHistory.Empty();
 }
 
+void UTBS_GameInstance::ResetGame()
+{
+	HumanSniperHP = 20;
+	HumanBrawlerHP = 40;
+	AiSniperHP = 20;
+	AiBrawlerHP = 40;
+	ClearMoveHistory();
+}
+
