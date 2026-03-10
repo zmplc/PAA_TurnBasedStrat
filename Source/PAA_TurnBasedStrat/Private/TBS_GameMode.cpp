@@ -122,6 +122,20 @@ void ATBS_GameMode::BeginPlay()
 	}
 	
 	StartPlacementPhase();
+
+	// Siccome per il MainMenu ho messo input mode UI only, quando inizia la partita devo abilitare di nuovo l'input a modalità normale
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+	if (PC)
+	{
+		FInputModeGameAndUI InputMode;
+		InputMode.SetHideCursorDuringCapture(false);
+		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+
+		PC->SetInputMode(InputMode);
+		PC->bShowMouseCursor = true;
+		PC->bEnableClickEvents = true;
+		PC->bEnableMouseOverEvents = true;
+	}
 }
 
 // Funzione lancio moneta
