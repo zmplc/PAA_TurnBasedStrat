@@ -46,14 +46,15 @@ Di seguito è fornita una descrizione dei file principali organizzata per catego
 
 ### Texture
 
-| Texture               | Descrizione                                     |
-|-----------------------|-------------------------------------------------|
-| `T_Brawler_AI`        | Brawler robot per AI                            |
-| `T_Brawler_Human`     | Brawler umano per HumanPlayer                   |
-| `T_FloorLevel`        | Texture immagine dello spazio usata come sfondo |
-| `T_Sniper_AI`         | Sniper robot per AI                             |
-| `T_Sniper_Human`      | Sniper umano per HumanPlayer                    |
-| `T_VictoryBackground` | Texture immagine per schermata vittoria         |
+| Texture                 | Descrizione                                     |
+|-------------------------|-------------------------------------------------|
+| `T_Brawler_AI`		  | Brawler robot per AI                            |
+| `T_Brawler_Human`		  | Brawler umano per HumanPlayer                   |
+| `T_FloorLevel`		  | Texture immagine dello spazio usata come sfondo |
+| `T_HowToPlayBackground` | Texture immagine per schermata how to play      |
+| `T_Sniper_AI`			  | Sniper robot per AI                             |
+| `T_Sniper_Human`        | Sniper umano per HumanPlayer                    |
+| `T_VictoryBackground`   | Texture immagine per schermata vittoria         |
 
 ## Risorse utilizzate
 - [Documentazione ufficiale Unreal Engine 5.6](https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-5-6-documentation?application_version=5.6)
