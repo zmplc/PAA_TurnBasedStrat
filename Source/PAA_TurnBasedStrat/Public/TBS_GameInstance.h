@@ -61,6 +61,10 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Move History")
 	TArray<FMoveHistoryEntry> MoveHistory;
 
+	// AIPlayer selezionata dal giocatore nel MainMenu (0=RandomPlayer, 1=HeuristicPlayer)
+	UPROPERTY(BlueprintReadWrite, Category = "AI")
+	int32 SelectedAIType = 0;
+
 	// Incremento vittorie HumanPlayer
 	UFUNCTION(BlueprintCallable, Category = "Score")
 	void IncrementScoreHumanPlayer();

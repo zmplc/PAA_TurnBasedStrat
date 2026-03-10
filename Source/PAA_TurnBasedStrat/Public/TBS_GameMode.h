@@ -63,7 +63,13 @@ public:
 
 	// Tipo di AI
 	UPROPERTY(EditDefaultsOnly, Category = "Config")
-	TSubclassOf<class ARandomPlayer> AIPlayerClass;
+	TSubclassOf<class APawn> AIPlayerClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Config")
+	TSubclassOf<APawn> RandomAIClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Config")
+	TSubclassOf<APawn> HeuristicAIClass;
 
 	// Proprietà per fasi partita
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game Status")

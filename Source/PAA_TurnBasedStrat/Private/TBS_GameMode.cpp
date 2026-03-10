@@ -50,29 +50,55 @@ void ATBS_GameMode::BeginPlay()
 		return;
 	}
 
-	if (AIPlayerClass)
+	// Spawn dell'AI Player in base alla scelta del giocatore
+	UTBS_GameInstance* GI = GetGameInstance<UTBS_GameInstance>();
+	TSubclassOf<APawn> ChosenAIClass = nullptr;
+
+	if (GI)
+	{
+		if (GI->SelectedAIType == 0)
+		{
+			ChosenAIClass = RandomAIClass;
+			UE_LOG(LogTemp, Log, TEXT("GameMode: Spawno RandomPlayer"));
+		}
+		else if (GI->SelectedAIType == 1)
+		{
+			ChosenAIClass = HeuristicAIClass;
+			UE_LOG(LogTemp, Log, TEXT("GameMode: Spawno HeuristicPlayer"));
+		}
+	}
+	// Se classe non valida o ci sono errori spawno RandomPlayer
+	if (!ChosenAIClass)
+	{
+		ChosenAIClass = RandomAIClass;
+		UE_LOG(LogTemp, Warning, TEXT("GameMode: Nessuna AI selezionata, uso Random di default"));
+	}
+	
+	// Se la classe è valida allora spawno l'AI Player scelto
+	if (ChosenAIClass)
 	{
 		FVector AISpawnLocation = FVector(0, 0, -1000);
-		ARandomPlayer* AIPlayer = GetWorld()->SpawnActor<ARandomPlayer>(AIPlayerClass, AISpawnLocation, FRotator::ZeroRotator);
+		APawn* AIPlayer = GetWorld()->SpawnActor<APawn>(ChosenAIClass, AISpawnLocation, FRotator::ZeroRotator);
 
 		if (AIPlayer && AIPlayer->Implements<UPlayerInterface>())
 		{
 			RandomPlayer.SetObject(AIPlayer);
 			RandomPlayer.SetInterface(Cast<IPlayerInterface>(AIPlayer));
-			UE_LOG(LogTemp, Log, TEXT("RandomPlayer spawnato e inizializzato correttamente"));
+			UE_LOG(LogTemp, Log, TEXT("GameMode: AI Player spawnato e inizializzato correttamente"));
 		}
 		else
 		{
-			UE_LOG(LogTemp, Error, TEXT("Errore nello spawn di RandomPlayer o interfaccia mancante"));
+			UE_LOG(LogTemp, Error, TEXT("GameMode: Errore nello spawn dell'AI o interfaccia mancante"));
 			return;
 		}
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("AIPlayerClass non assegnato (devo controllare BP)"));
+		UE_LOG(LogTemp, Error, TEXT("GameMode: Nessuna classe AI assegnata o altri errori"));
 		return;
 	}
 
+	// Inizializzazione GridData
 	if (GridData)
 	{
 		FieldSize = GridData->GridSize;
@@ -85,6 +111,7 @@ void ATBS_GameMode::BeginPlay()
 		return;
 	}
 
+	// Controllo se GameFieldClass è assegnato
 	if (GameFieldClass != nullptr)
 	{
 		GField = GetWorld()->SpawnActor<AGameField>(GameFieldClass);
@@ -96,6 +123,7 @@ void ATBS_GameMode::BeginPlay()
 		return;
 	}
 
+	// Creo e mostro il widget HUD
 	if (HUDWidgetClass)
 	{
 		APlayerController* PC = GetWorld()->GetFirstPlayerController();
@@ -115,12 +143,12 @@ void ATBS_GameMode::BeginPlay()
 	}
 
 	// Reset HUD
-	UTBS_GameInstance* GI = GetGameInstance<UTBS_GameInstance>();
 	if (GI)
 	{
 		GI->ResetGame();
 	}
 	
+	// Inizio fase piazzamento unità
 	StartPlacementPhase();
 
 	// Siccome per il MainMenu ho messo input mode UI only, quando inizia la partita devo abilitare di nuovo l'input a modalità normale
