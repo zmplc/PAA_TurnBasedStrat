@@ -65,6 +65,14 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "AI")
 	int32 SelectedAIType = 0;
 
+	// Numero delle torri controllate da HumanPlayer
+	UPROPERTY(BlueprintReadOnly, Category = "Towers")
+	int32 HumanTowersControlled = 0;
+
+	// Numero delle torri controllate dall'AI
+	UPROPERTY(BlueprintReadOnly, Category = "Towers")
+	int32 AiTowersControlled = 0;
+
 	// Incremento vittorie HumanPlayer
 	UFUNCTION(BlueprintCallable, Category = "Score")
 	void IncrementScoreHumanPlayer();
@@ -116,6 +124,10 @@ public:
 	// Funzione per resettare lo storico delle mosse quando finisce la partita
 	UFUNCTION(BlueprintCallable, Category = "Move History")
 	void ClearMoveHistory();
+
+	// Funzione per aggiornare il numero delle torri controllate dai player
+	UFUNCTION(BlueprintCallable, Category = "Towers")
+	void UpdateTowerCount(int32 HumanCount, int32 AiCount);
 
 	UFUNCTION(BlueprintCallable, Category = "UI")
 	void ResetGame();

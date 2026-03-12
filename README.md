@@ -52,10 +52,12 @@ Di seguito è fornita una descrizione dei file principali organizzata per catego
 
 | Texture                 | Descrizione                                     |
 |-------------------------|-------------------------------------------------|
+| `T_AiTowerCount`		  | Texture immagine per icona torre AI             |
 | `T_Brawler_AI`		  | Brawler robot per AI                            |
 | `T_Brawler_Human`		  | Brawler umano per HumanPlayer                   |
 | `T_FloorLevel`		  | Texture immagine dello spazio usata come sfondo |
 | `T_HowToPlayBackground` | Texture immagine per schermata how to play      |
+| `T_HumanTowerCount`	  | Texture immagine per icona torre Human          |
 | `T_Sniper_AI`			  | Sniper robot per AI                             |
 | `T_Sniper_Human`        | Sniper umano per HumanPlayer                    |
 | `T_VictoryBackground`   | Texture immagine per schermata vittoria         |

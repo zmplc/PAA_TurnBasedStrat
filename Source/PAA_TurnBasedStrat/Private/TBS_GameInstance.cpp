@@ -114,12 +114,20 @@ void UTBS_GameInstance::ClearMoveHistory()
 	MoveHistory.Empty();
 }
 
+void UTBS_GameInstance::UpdateTowerCount(int32 HumanTowerCount, int32 AiTowerCount)
+{
+	HumanTowersControlled = HumanTowerCount;
+	AiTowersControlled = AiTowerCount;
+}
+
 void UTBS_GameInstance::ResetGame()
 {
 	HumanSniperHP = 20;
 	HumanBrawlerHP = 40;
 	AiSniperHP = 20;
 	AiBrawlerHP = 40;
+	HumanTowersControlled = 0;
+	AiTowersControlled = 0;
 	ClearMoveHistory();
 }
 

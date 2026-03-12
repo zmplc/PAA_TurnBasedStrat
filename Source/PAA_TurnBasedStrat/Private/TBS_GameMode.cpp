@@ -492,6 +492,13 @@ void ATBS_GameMode::UpdateTowerCounts()
 	HumanTowersControlled = NewHumanTowers;
 	AiTowersControlled = NewAiTowers;
 
+	// Aggiorno le torri nell'HUD
+	UTBS_GameInstance* GI = GetGameInstance<UTBS_GameInstance>();
+	if (GI)
+	{
+		GI->UpdateTowerCount(NewHumanTowers, NewAiTowers);
+	}
+
 	UE_LOG(LogTemp, Log, TEXT("GameMode: Torri aggiornate - Human: %d, AI: %d"), HumanTowersControlled, AiTowersControlled);
 }
 
