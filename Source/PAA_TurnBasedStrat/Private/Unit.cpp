@@ -466,18 +466,18 @@ void AUnit::CounterAttack(AUnit* Attacker, const AGameField* GameField)
 	Attacker->CurrentHealth -= CounterDamage;
 	Attacker->CurrentHealth = FMath::Max(0, Attacker->CurrentHealth);
 
+	// Aggiorno gli HP nell'UI
+	if (UTBS_GameInstance* GI = Cast<UTBS_GameInstance>(GetWorld()->GetGameInstance()))
+	{
+		bool bIsSniper = (Attacker->UnitType == EUnitType::SNIPER);
+		GI->UpdateUnitHP(Attacker->OwnerPlayerID, bIsSniper, Attacker->CurrentHealth);
+	}
+
 	// Se l'attacker muore dopo il contrattacco
 	if (Attacker->CurrentHealth <= 0)
 	{
 		Attacker->SetActorHiddenInGame(true);
 		Attacker->SetActorEnableCollision(false);
-
-		// Aggiorno gli HP nell'UI
-		if (UTBS_GameInstance* GI = Cast<UTBS_GameInstance>(GetWorld()->GetGameInstance()))
-		{
-			bool bIsSniper = (Attacker->UnitType == EUnitType::SNIPER);
-			GI->UpdateUnitHP(Attacker->OwnerPlayerID, bIsSniper, Attacker->CurrentHealth);
-		}
 
 		// Dopodiché chiamo la funzione della gamemode OnUnitDied per gestire il respawn dell'unità
 		if (ATBS_GameMode* GM = GetWorld()->GetAuthGameMode<ATBS_GameMode>())
