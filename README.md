@@ -16,6 +16,10 @@ Questo progetto consiste nell'implementazione in Unreal Engine 5.6 di un gioco s
 * [ ] Lista dello storico delle mosse eseguite.
 * [ ] AI che utilizza algoritmi euristici ottimizzati di movimento (diverso da A*).
 
+#### Note aggiuntive
+
+- L'AI attacca il nemico con meno HP tra quelli nel range di attacco, invece del più vicino. In questo modo l'AI si concentra sulle unità più deboli, cercando di eliminarle rapidamente per ridurre il numero di unità di HumanPlayer nella mappa.
+
 ## Descrizione dei file principali
 Di seguito è fornita una descrizione dei file principali organizzata per categoria, con dettagli aggiuntivi sui file più rilevanti.
 
