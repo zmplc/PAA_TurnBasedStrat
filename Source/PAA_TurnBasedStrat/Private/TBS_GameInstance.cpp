@@ -120,6 +120,18 @@ void UTBS_GameInstance::UpdateTowerCount(int32 HumanTowerCount, int32 AiTowerCou
 	AiTowersControlled = AiTowerCount;
 }
 
+void UTBS_GameInstance::ResetMapConfig()
+{
+	// Reset ai valori default
+	Level0Threshold = 0.42f;
+	Level1Threshold = 0.46f;
+	Level2Threshold = 0.54f;
+	Level3Threshold = 0.64f;
+	Level4Threshold = 0.74f;
+
+	UE_LOG(LogTemp, Log, TEXT("GameInstance: Parametri generazione mappa resettati ai valori default"));
+}
+
 void UTBS_GameInstance::ResetGame()
 {
 	HumanSniperHP = 20;
@@ -129,5 +141,6 @@ void UTBS_GameInstance::ResetGame()
 	HumanTowersControlled = 0;
 	AiTowersControlled = 0;
 	ClearMoveHistory();
+	ResetMapConfig();
 }
 

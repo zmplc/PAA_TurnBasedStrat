@@ -5,6 +5,7 @@
 #include "Math/UnrealMathUtility.h"
 #include "Tile.h"
 #include "Tower.h"
+#include "TBS_GameInstance.h"
 #include "Containers/Queue.h"
 #include "EngineUtils.h"
 
@@ -72,14 +73,33 @@ void AGameField::GenerateGrid()
 
 		TowerArray.Empty();
 
-		// Seed random per generare mappe diverse ad ogni play
+		// Prendo i parametri da gameinstance
+		UTBS_GameInstance* GI = Cast<UTBS_GameInstance>(GetWorld()->GetGameInstance());
+
+		// Se ci sono errori con gameinstance li metto di default io
+		float Level0 = 0.42f;
+		float Level1 = 0.46f;
+		float Level2 = 0.54f;
+		float Level3 = 0.64f;
+		float Level4 = 0.74f;
+
+		// Leggo da gameinstance i threshold dei livelli
+		if (GI)
+		{
+			Level0 = GI->Level0Threshold;
+			Level1 = GI->Level1Threshold;
+			Level2 = GI->Level2Threshold;
+			Level3 = GI->Level3Threshold;
+			Level4 = GI->Level4Threshold;
+
+			UE_LOG(LogTemp, Log, TEXT("GameField: Parametri da GameInstance - Level0=%.2f, Level1=%.2f, Level2=%.2f, Level3=%.2f, Level4=%.2f"), Level0, Level1, Level2, Level3, Level4);
+		}
+
+		// NoiseScale
+		float NoiseScale = 0.08f;
+		// Offset randomici per evitare pattern simili
 		const int32 Seed = FMath::Rand();
 		FRandomStream RandomStream(Seed);
-
-		// Scale factor per Perlin Noise (nota: più è basso più ho pianure)
-		const float NoiseScale = 0.08f;
-
-		// Offset randomici per evitare pattern simili
 		const float OffsetX = RandomStream.FRandRange(0.f, 10000.f);
 		const float OffsetY = RandomStream.FRandRange(0.f, 10000.f);
 
@@ -100,21 +120,25 @@ void AGameField::GenerateGrid()
 
 				// Converto il NormalizedNoise in un livello di altezza discreto
 				int32 HeightLevel;
-				if (NormalizedNoise < 0.42f)
+				if (NormalizedNoise < Level0)
 				{
 					HeightLevel = 0;
 				}
-				else if (NormalizedNoise < 0.46f)
+				else if (NormalizedNoise < Level1)
 				{
 					HeightLevel = 1;
 				}
-				else if (NormalizedNoise < 0.54f)
+				else if (NormalizedNoise < Level2)
 				{
 					HeightLevel = 2;
 				}
-				else if (NormalizedNoise < 0.64f)
+				else if (NormalizedNoise < Level3)
 				{
 					HeightLevel = 3;
+				}
+				else if (NormalizedNoise < Level4)
+				{
+					HeightLevel = 4;
 				}
 				else
 				{

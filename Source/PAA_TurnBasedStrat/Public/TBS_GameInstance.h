@@ -73,6 +73,33 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Towers")
 	int32 AiTowersControlled = 0;
 
+	// VALORI PER GENERAZIONE MAPPA
+
+	// Livello 0
+	// Default: 0.42f, range: 0.40f-0.44f
+	UPROPERTY(BlueprintReadWrite, Category = "Map Config")
+	float Level0Threshold = 0.42f;
+
+	// Livello 1
+	// Default: 0.46f, range: 0.44f-0.50f
+	UPROPERTY(BlueprintReadWrite, Category = "Map Config")
+	float Level1Threshold = 0.46f;
+
+	// Livello 2
+	// Default: 0.54f, range: 0.50f-0.58f
+	UPROPERTY(BlueprintReadWrite, Category = "Map Config")
+	float Level2Threshold = 0.54f;
+
+	// Livello 3
+	// Default: 0.64f, range: 0.60f-0.68f
+	UPROPERTY(BlueprintReadWrite, Category = "Map Config")
+	float Level3Threshold = 0.64f;
+
+	// Livello 4
+	// Default: 0.64f, range: 0.68f-0.78f
+	UPROPERTY(BlueprintReadWrite, Category = "Map Config")
+	float Level4Threshold = 0.74f;
+
 	// Incremento vittorie HumanPlayer
 	UFUNCTION(BlueprintCallable, Category = "Score")
 	void IncrementScoreHumanPlayer();
@@ -128,6 +155,10 @@ public:
 	// Funzione per aggiornare il numero delle torri controllate dai player
 	UFUNCTION(BlueprintCallable, Category = "Towers")
 	void UpdateTowerCount(int32 HumanCount, int32 AiCount);
+
+	// Funzione per resettare configurazione mappa ai valori di default
+	UFUNCTION(BlueprintCallable, Category = "Map Config")
+	void ResetMapConfig();
 
 	UFUNCTION(BlueprintCallable, Category = "UI")
 	void ResetGame();
