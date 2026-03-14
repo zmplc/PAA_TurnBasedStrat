@@ -55,8 +55,10 @@ Di seguito è fornita una descrizione dei file principali organizzata per catego
 | `T_AiTowerCount`		  | Texture immagine per icona torre AI             |
 | `T_Brawler_AI`		  | Brawler robot per AI                            |
 | `T_Brawler_Human`		  | Brawler umano per HumanPlayer                   |
+| `T_Bullet`		      | Texture immagine per proiettile                 |
 | `T_FloorLevel`		  | Texture immagine dello spazio usata come sfondo |
 | `T_HumanTowerCount`	  | Texture immagine per icona torre Human          |
+| `T_Knife`		          | Texture immagine per arma corpo a corpo         |
 | `T_MainBackground`      | Texture immagine per le schermate widget HUD    |
 | `T_Sniper_AI`			  | Sniper robot per AI                             |
 | `T_Sniper_Human`        | Sniper umano per HumanPlayer                    |
