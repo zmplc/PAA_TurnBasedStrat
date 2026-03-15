@@ -1034,7 +1034,7 @@ void AHeuristicPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATB
 				GameInstance->SetTurnMessage(FString::Printf(TEXT("AI: %s attacca!"), *Unit->GetName()));
 			}
 
-			// Aspetto 0,5 secondi e poi passo alla seconda unità
+			// Aspetto 1 secondo e poi passo alla seconda unità
 			FTimerHandle NextUnitTimer;
 			GetWorld()->GetTimerManager().SetTimer(NextUnitTimer, [this, Units, CurrentIndex, GM]()
 				{
@@ -1042,7 +1042,7 @@ void AHeuristicPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATB
 					if (!GM || GM->bGameEnded) return;
 					HideMovementRange(GM->GField);
 					ProcessUnit(Units, CurrentIndex + 1, GM);
-				}, 0.5f, false);
+				}, 1.0f, false);
 
 		}, 1.0f, false);
 }

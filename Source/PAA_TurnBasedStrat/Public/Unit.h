@@ -92,6 +92,34 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Unit Position")
 	FVector2D CurrentGridPosition;
 
+	// Variabile bool per sapere se l'unità è in movimento oppure no
+	UPROPERTY()
+	bool bIsMoving = false;
+
+	// Array di vettori per salvare il percorso per l'interpolazione del movimento dell'unità
+	UPROPERTY()
+	TArray<FVector> MovementPath;
+
+	// Variabile per tenere traccia dell'indice corrente per l'array MovementPath
+	UPROPERTY()
+	int32 CurrentPathIndex = 0;
+
+	// Posizione di partenza
+	UPROPERTY()
+	FVector MovementStartLocation;
+
+	// Posizione di destinazione
+	UPROPERTY()
+	FVector MovementTargetLocation;
+
+	// Variabile per tenere conto del tempo trascorso dall'inizio del movimento dell'unità (inizializzato a 0.0f)
+	UPROPERTY()
+	float MovementElapsedTime = 0.0f;
+
+	// Durata totale del movimento
+	UPROPERTY(EditAnywhere, Category = "Movement Interpolation")
+	float MovementDuration = 0.2f;
+
 	UFUNCTION(BlueprintCallable, Category = "Unit Position")
 	FVector2D GetCurrentGridPosition() const { return CurrentGridPosition; }
 
@@ -117,6 +145,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Unit Movement")
 	TArray<FIntPoint> GetReachableTiles(const class AGameField* GameField) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Unit Movement")
+	TArray<FIntPoint> GetPathTo(int32 TargetX, int32 TargetY, const AGameField* GameField) const;
 
 	UFUNCTION(BlueprintCallable, Category = "Unit Movement")
 	virtual bool MoveTo(int32 TargetX, int32 TargetY, class AGameField* GameField);
@@ -146,4 +177,8 @@ public:
 
 	// Funzione per convertire le posizioni delle tile in lettere e numeri (esempio: A0, A1, ecc)
 	static FString GridPositionConverter(int32 X, int32 Y);
+
+	// Getter per sapere se l'unità è in movimento o no per interpolazione movimento
+	UFUNCTION(BlueprintCallable, Category = "Movement Interpolation")
+	bool IsMoving() const { return bIsMoving; }
 };

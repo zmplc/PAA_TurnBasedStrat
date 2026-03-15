@@ -32,6 +32,51 @@ void AUnit::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	// Per ogni tick controllo se l'unità è in movimento
+	if (bIsMoving)
+	{
+		MovementElapsedTime += DeltaTime;
+		
+		// Definisco Alpha come il rapporto tra il tempo trascorso e la durata totale del movimento
+		// Rappresenta quanto sono lontano dalla posizione di partenza alla posizione di destinazione con valori tra 0.0f e 1.0f
+		float Alpha = FMath::Clamp(MovementElapsedTime / MovementDuration, 0.0f, 1.0f);
+
+		// Ora con funzione Lerp posso fare l'interpolazione del movimento tra posizione di partenza e posizione di destinazione, usando Alpha
+		FVector NewLocation = FMath::Lerp(MovementStartLocation, MovementTargetLocation, Alpha);
+		SetActorLocation(NewLocation);
+
+		// Se Alpha è >= di 1.0f significa che sono arrivato alla posizione di destinazione, quindi fermo il movimento dell'unità e resetto tutte le variabili di movimento
+		if (Alpha >= 1.0f)
+		{
+			// Siccome uso Clamp per limitare Alpha a 1.0f è possibile che esca un valore tipo 0.9
+			// Allora setto l'unità nella posizione di destinazione
+			SetActorLocation(MovementTargetLocation);
+
+			// Incremento l'indice
+			CurrentPathIndex++;
+
+			if (CurrentPathIndex < MovementPath.Num())
+			{
+				// Siccome l'array non è finito continuo con la prossima tile nell'array
+				// Ogni volta devo aggiornare la posizione di partenza, di destinazione e il tempo per arrivare alla posizione di destinazione
+				MovementStartLocation = MovementTargetLocation;
+				MovementTargetLocation = MovementPath[CurrentPathIndex];
+				MovementElapsedTime = 0.0f;
+
+				UE_LOG(LogTemp, Log, TEXT("Unit: Tile %d/%d raggiunta, continuo"), CurrentPathIndex, MovementPath.Num());
+			}
+			else
+			{
+				// Array finito, resetto tutte le variabili e metto bIsMoving a false per interrompere il movimento dell'unità
+				bIsMoving = false;
+				MovementElapsedTime = 0.0f;
+				MovementPath.Empty();
+				CurrentPathIndex = 0;
+
+				UE_LOG(LogTemp, Log, TEXT("Unit: Movimento completato (path finito)"));
+			}
+		}
+	}
 }
 
 // Called to bind functionality to input
@@ -157,6 +202,116 @@ TArray<FIntPoint> AUnit::GetReachableTiles(const AGameField* GameField) const
 	return ReachableTiles;
 }
 
+TArray<FIntPoint> AUnit::GetPathTo(int32 TargetX, int32 TargetY, const AGameField* GameField) const
+{
+	TArray<FIntPoint> Path;
+
+	if (!GameField) return Path;
+
+	// Tile di partenza
+	FVector2D StartTile = GetCurrentGridPosition();
+	int32 StartX = FMath::RoundToInt(StartTile.X);
+	int32 StartY = FMath::RoundToInt(StartTile.Y);
+
+	// Se sono già alla target tile faccio return dell'array Path che è vuoto
+	if (StartX == TargetX && StartY == TargetY) return Path;
+
+	// Uso BFS con ricostruzione del percorso
+	TArray<bool> Visited;
+	Visited.Init(false, GameField->GridSizeX * GameField->GridSizeY);
+
+	// Coda per BFS e mappe per poi ricostruire il percorso
+	TQueue<FIntPoint> Queue;
+	TMap<FIntPoint, FIntPoint> CameFromMap;
+	TMap<FIntPoint, int32> CostMap;
+
+	// Parto dalla StartTile
+	FIntPoint StartPoint(StartX, StartY);
+	Queue.Enqueue(StartPoint);
+	Visited[StartY * GameField->GridSizeX + StartX] = true;
+	CostMap.Add(StartPoint, 0);
+
+	// Direzioni di movimento (no diagonali)
+	TArray<FIntPoint> Directions = {
+		FIntPoint(0, 1),
+		FIntPoint(0, -1),
+		FIntPoint(1, 0),
+		FIntPoint(-1, 0)
+	};
+
+	// Variabile bool per tenere traccia se ho trovato la target tile
+	bool bFoundTarget = false;
+
+	// Inizio BFS
+	while (!Queue.IsEmpty() && !bFoundTarget)
+	{
+		FIntPoint Current;
+		Queue.Dequeue(Current);
+
+		// Se ho trovato il target esco dal ciclo e metto bool a true
+		if (Current.X == TargetX && Current.Y == TargetY)
+		{
+			bFoundTarget = true;
+			break;
+		}
+
+		int32 CurrentCost = CostMap[Current];
+
+		// Controllo le 4 tile adiacenti
+		for (const FIntPoint& Dir : Directions)
+		{
+			int32 NeighborX = Current.X + Dir.X;
+			int32 NeighborY = Current.Y + Dir.Y;
+
+			// Controllo di essere dentro la griglia
+			if (NeighborX >= 0 && NeighborX < GameField->GridSizeX && NeighborY >= 0 && NeighborY < GameField->GridSizeY)
+			{
+				int32 Index = NeighborY * GameField->GridSizeX + NeighborX;
+
+				if (!Visited[Index])
+				{
+					ATile* Neighbor = GameField->GetTileAtPosition(NeighborX, NeighborY);
+
+					if (Neighbor && Neighbor->IsWalkable())
+					{
+						int32 MoveCost = GetMovementCost(Current.X, Current.Y, NeighborX, NeighborY, GameField);
+
+						if (MoveCost > 0)
+						{
+							int32 NewCost = CurrentCost + MoveCost;
+
+							if (NewCost <= MaxMovement)
+							{
+								Visited[Index] = true;
+								CostMap.Add(FIntPoint(NeighborX, NeighborY), NewCost);
+								// Aggiungo la tile nelle array per ricostruire il percorso di movimento
+								CameFromMap.Add(FIntPoint(NeighborX, NeighborY), Current);
+								Queue.Enqueue(FIntPoint(NeighborX, NeighborY));
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Ricostruisco ora il percorso al contrario pasrtendo dalla target tile usando CameFromMap fino ad arrivare alla start tile
+	if (bFoundTarget)
+	{
+		FIntPoint Current(TargetX, TargetY);
+
+		while (!(Current.X == StartX && Current.Y == StartY))
+		{
+			// Inserisco la tile corrente all'inizio dell'array Path, in questo modo prendo il percorso salvato in CameFromMap e cambio ordine
+			Path.Insert(Current, 0);
+			Current = CameFromMap[Current];
+		}
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("GetPathTo: Percorso calcolato con %d tile"), Path.Num());
+	return Path;
+}
+
 bool AUnit::MoveTo(int32 TargetX, int32 TargetY, AGameField* GameField)
 {
 	// Controllo se posso muovermi alla target tile
@@ -166,25 +321,43 @@ bool AUnit::MoveTo(int32 TargetX, int32 TargetY, AGameField* GameField)
 		return false;
 	}
 
+	// Calcolo il percorso alla target tile chiamando GetPathTo
+	TArray<FIntPoint> PathTiles = GetPathTo(TargetX, TargetY, GameField);
+	// Se array vuoto non c'è un percorso valido e faccio return false
+	if (PathTiles.Num() == 0)
+	{
+		UE_LOG(LogTemp, Error, TEXT("MoveTo: Path non trovato"));
+		return false;
+	}
+
+	// Ora prendo PathTiles e lo converto in una array con le posizioni reali delle tile nel gamefield
+	// In questo modo posso usare questo array per far muovere le unità con l'interpolazione del movimento nel Tick
+	MovementPath.Empty();
+	// Per ogni tile in PathTiles
+	for (const FIntPoint& TilePos : PathTiles)
+	{
+		ATile* PathTile = GameField->GetTileAtPosition(TilePos.X, TilePos.Y);
+		if (PathTile)
+		{
+			FVector TileLocation = PathTile->GetActorLocation();
+			TileLocation.Z += 150.f;
+			MovementPath.Add(TileLocation);
+		}
+	}
+
 	// Aggiorno la posizione corrente dell'unità
 	SetCurrentGridPosition(FVector2D(TargetX, TargetY));
 
-	ATile* TargetTile = GameField->GetTileAtPosition(TargetX, TargetY);
-	if (TargetTile)
+	// Se ci sono tile in MovementPath allora faccio partire l'interpolazione del movimento mettendo bIsMoving a true e far partire il movimento nel Tick
+	if (MovementPath.Num() > 0)
 	{
-		FVector TileLocation = TargetTile->GetActorLocation();
-		FVector NewLocation = TileLocation;
-		NewLocation.Z = TileLocation.Z + 150.f;
-
-		SetActorLocation(NewLocation);
-		UE_LOG(LogTemp, Log, TEXT("MoveTo: Unita' mossa"));
-
+		MovementStartLocation = GetActorLocation();
+		MovementTargetLocation = MovementPath[0];
+		CurrentPathIndex = 0;
+		MovementElapsedTime = 0.0f;
+		bIsMoving = true;
 	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("MoveTo: TargetTile e' nulla"));
-		return false;
-	}
+
 	return true;
 }
 
@@ -276,10 +449,14 @@ void AUnit::RespawnAtInitialPosition()
 		// Se esiste devo piazzare l'unità sulla tile
 		if (RespawnTile)
 		{
+			// Faccio il respawn dell'unità sulla tile di piazzamento iniziale
 			FVector TileLocation = RespawnTile->GetActorLocation();
 			FVector NewLocation = TileLocation;
 			NewLocation.Z = TileLocation.Z + 150.f;
+			// Siccome è un respawn automatico non attivo l'interpolazione ma piazzo direttamente l'unità sulla tile
 			SetActorLocation(NewLocation);
+			bIsMoving = false;
+			MovementElapsedTime = 0.0f;
 			// Rendo l'unità di nuovo visibile e riattivo collisioni
 			SetActorHiddenInGame(false);
 			SetActorEnableCollision(true);

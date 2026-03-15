@@ -402,8 +402,7 @@ void AHumanPlayer::OnClick()
             }
             else
             {
-                UE_LOG(LogTemp, Warning, TEXT("Tile non valida per piazzamento (fuori da Y=0,1,2 o non camminabile)"));
-                GameInstance->SetTurnMessage(TEXT("Tile non valida (Y=0-2 e camminabile)"));
+                GameInstance->SetTurnMessage(TEXT("Tile non valida (Y=0,1,2 e camminabile)"));
             }
         }
         // Fase movimento
@@ -411,10 +410,16 @@ void AHumanPlayer::OnClick()
         {
             UE_LOG(LogTemp, Log, TEXT("Clic su tile - movimento"));
 
+            // Se l'unità è ancora in movimento HumanPlayer non può effettuare nessuna azione
+            if (SelectedUnit->IsMoving())
+            {
+                GameInstance->SetTurnMessage(TEXT("Attendi che l'unita' finisca di muoversi"));
+                return;
+            }
+
             // Se l'unità si è già mossa non può muoversi di nuovo, può solo attaccare, selezionare la seconda unità (se è la prima) o humanplayer può passare il turno
             if (SelectedUnit->bHasMovedThisTurn)
             {
-                UE_LOG(LogTemp, Warning, TEXT("Questa unita' ha gia' mosso"));
                 GameInstance->SetTurnMessage(TEXT("Unita' gia' mossa, puo' solo attaccare oppure seleziona un'altra unita'"));
                 return;
             }
@@ -422,7 +427,6 @@ void AHumanPlayer::OnClick()
             // Se l'unità ha attaccato non può muoversi
             if (SelectedUnit->bHasAttackedThisTurn)
             {
-                UE_LOG(LogTemp, Warning, TEXT("L'unita' ha gia' attaccato, non puo' muoversi"));
                 GameInstance->SetTurnMessage(TEXT("L'unita' ha gia' attaccato, non puo' muoversi"));
                 return;
             }

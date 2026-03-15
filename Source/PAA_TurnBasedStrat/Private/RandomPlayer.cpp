@@ -1044,7 +1044,7 @@ void ARandomPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATBS_G
 				GameInstance->SetTurnMessage(FString::Printf(TEXT("AI: %s attacca!"), *Unit->GetName()));
 			}
 
-			// Aspetto 0,5 secondi e poi passo alla seconda unità
+			// Aspetto 1 secondo e poi passo alla seconda unità
 			FTimerHandle NextUnitTimer;
 			GetWorld()->GetTimerManager().SetTimer(NextUnitTimer, [this, Units, CurrentIndex, GM]()
 				{
@@ -1052,7 +1052,7 @@ void ARandomPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATBS_G
 					if (!GM || GM->bGameEnded) return;
 					HideMovementRange(GM->GField);
 					ProcessUnit(Units, CurrentIndex + 1, GM);
-				}, 0.5f, false);
+				}, 1.0f, false);
 
 		}, 1.0f, false);
 }

@@ -73,6 +73,7 @@ Di seguito è fornita una descrizione dei file principali organizzata per catego
 - [A-star search algorithm Wikipedia](https://en.wikipedia.org/wiki/A*_search_algorithm#Pseudocode)
 - [Hexagonal Grids - sezione Distances from Red Blob Games](https://www.redblobgames.com/grids/hexagons/#distances)
 - [Chebyshev distance Wikipedia](https://en.wikipedia.org/wiki/Chebyshev_distance)
-- [FString Chr - UE 5.6](https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Runtime/Core/Containers/FString/Chr?application_version=5.3)
+- [FString Chr - UE](https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Runtime/Core/Containers/FString/Chr?application_version=5.3)
 - [Greedy Best first search algorithm from GeeksforGeeks](https://www.geeksforgeeks.org/dsa/greedy-best-first-search-algorithm/)
 - [Greedy Best-First Search from CodeAcademy.com](https://www.codecademy.com/resources/docs/ai/search-algorithms/greedy-best-first-search)
+- [Lerp - UE](https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Runtime/Core/Math/FMath/Lerp?application_version=5.3)
