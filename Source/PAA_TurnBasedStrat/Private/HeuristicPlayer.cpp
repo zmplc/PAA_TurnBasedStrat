@@ -575,14 +575,14 @@ float AHeuristicPlayer::EvaluateTowerScore(ATower* Tower, FVector2D UnitPos)
 		// Torre neutrale = priorità massima
 		Score += 100.0f;
 	}
-	else if (Status == ETowerStatus::CONTESTED)
-	{
-		// Torre contesa = da difendere o conquistare
-		Score += 80.0f;
-	}
 	else if (Status == ETowerStatus::CONTROLLED && TowerOwner == PlayerID)
 	{
 		// Torre già dell'AI = da difendere ma dopo torre contesa/neutrale
+		Score += 80.0f;
+	}
+	else if (Status == ETowerStatus::CONTESTED)
+	{
+		// Torre contesa = da difendere o conquistare
 		Score += 50.0f;
 	}
 	else if (Status == ETowerStatus::CONTROLLED && TowerOwner != PlayerID)
@@ -1016,7 +1016,7 @@ void AHeuristicPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATB
 				}
 				// Calcolo il danno e poi lo applico
 				int32 Damage = Unit->CalculateDamage();
-				Target->ApplyDamage(Damage);
+				Target->ApplyDamage(Damage, Unit, GM->GField);
 
 				// Registro la mossa nello storico (per l'attacco la entry la chiamo AttackEntry così so distinguere movimento e attacco se fatti nello stesso turno)
 				if (GameInstance)

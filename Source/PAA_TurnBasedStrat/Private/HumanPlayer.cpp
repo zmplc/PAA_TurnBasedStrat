@@ -530,7 +530,7 @@ void AHumanPlayer::OnClick()
                 // Calcolo danno
                 int32 Damage = SelectedUnit->CalculateDamage();
                 // Applico il danno calcolato
-                HitUnit->ApplyDamage(Damage);
+                HitUnit->ApplyDamage(Damage, SelectedUnit, GM->GField);
                 // Imposto che l'unità ha attaccato questo turno
                 SelectedUnit->bHasAttackedThisTurn = true;
 

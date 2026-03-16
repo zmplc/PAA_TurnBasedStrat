@@ -1026,7 +1026,7 @@ void ARandomPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATBS_G
 				}
 				// Calcolo il danno e poi lo applico
 				int32 Damage = Unit->CalculateDamage();
-				Target->ApplyDamage(Damage);
+				Target->ApplyDamage(Damage, Unit, GM->GField);
 
 				// Registro la mossa nello storico (per l'attacco la entry la chiamo AttackEntry così so distinguere movimento e attacco se fatti nello stesso turno)
 				if (GameInstance)
