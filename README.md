@@ -18,22 +18,68 @@ Questo progetto consiste nell'implementazione in Unreal Engine 5.6 di un gioco s
 
 #### Note aggiuntive
 
+- RandomPlayer è l'AI che utilizza l'algoritmo A* per muoversi e attaccare.
+- HeuristicPlayer è l'AI che utilizza algoritmi euristici ottimizzati di movimento.
 - L'AI attacca il nemico con meno HP tra quelli nel range di attacco, invece del più vicino. In questo modo l'AI si concentra sulle unità più deboli, cercando di eliminarle rapidamente per ridurre il numero di unità di HumanPlayer nella mappa.
+- Le barre della vità delle unità sono sempre visibili a schermo. In base ai punti vita delle unità le barre cambiano colore e dimensione: verde, giallo e rosso.
+- Nella schermata di configurazione della mappa, l'utente può scegliere i parametri dei 5 livelli della mappa (acqua, terreno, collina e montagne).
+
+#### HeuristicPlayer
+
+**HeuristicPlayer** è la classe che implementa un'AI basata su algoritmi euristici ottimizzati di movimento. Invece di utilizzare l'algoritmo A* (usato invece in RandomPlayer), HeuristicPlayer valuta le mosse possibili in base a funzioni euristiche che tengono conto di diversi fattori:
+- distanza dalle torri
+- stato delle torri (neutrali, conquistate o contese)
+- distanza dalle unità nemiche
+- HP delle unità nemiche
+- range di attacco delle unità nemiche (siccome lo sniper attacca a distanza, l'AI cerca di attaccare lo sniper prima del brawler)
+
+Queste funzioni assegnano un punteggio a ciascuna mossa possibile e l'AI sceglie la mossa con il punteggio più alto, cercando così di massimizzare le proprie possibilità di vittoria.
 
 ## Descrizione dei file principali
 Di seguito è fornita una descrizione dei file principali organizzata per categoria, con dettagli aggiuntivi sui file più rilevanti.
 
 ### Classi C++
 
-| File           | Tipo  | Descrizione                           |
-|----------------|-------|---------------------------------------|
-| `Tile .h/.cpp` | Actor | Singola cella della griglia di gioco. |
+| File							| Tipo						   |
+|-------------------------------|------------------------------|
+| `ConfigData.h/.cpp`			| Data Asset				   |
+| `GameField.h/.cpp`			| Actor						   |
+| `HeuristicPlayer.h/.cpp`		| Pawn						   |
+| `HumanPlayer.h/.cpp`			| Pawn						   |
+| `PlayerInterface.h`			| Interface					   |
+| `RandomPlayer.h/.cpp`			| Pawn						   |
+| `TBS_GameInstance.h/.cpp`     | Game Instance				   |
+| `TBS_GameMode.h/.cpp`         | Game Mode					   |
+| `TBS_PlayerController.h/.cpp` | Player Controller			   |
+| `Tile.h/.cpp`					| Actor						   |
+| `Tower.h/.cpp`				| Actor						   |
+| `Unit.h/.cpp`					| Pawn (Base Class)			   |
+| `UnitBrawler.h/.cpp`			| Pawn (inherits from `AUnit`) |
+| `UnitSniper.h/.cpp`			| Pawn (inherits from `AUnit`) |
 
 ### Blueprint
 
-| Blueprint | Tipo            |
-|-----------|-----------------|
-| `BP_Tile` | Blueprint Actor |
+| Blueprint            | Tipo              |
+|----------------------|-------------------|
+| `BP_Brawler_AI`      | Pawn              |
+| `BP_Brawler_Human`   | Pawn              |
+| `BP_GameField`       | Actor             |
+| `BP_GameInstance`    | Game Instance     |
+| `BP_GameMode`        | Game Mode         |
+| `BP_HeuristicPlayer` | Pawn              |
+| `BP_HumanPlayer`     | Pawn              |
+| `BP_MenuGameMode`    | Game Mode         |
+| `BP_PlayerController`| Player Controller |
+| `BP_RandomPlayer`    | Pawn              |
+| `BP_Sniper_AI`       | Pawn              |
+| `BP_Sniper_Human`    | Pawn              |
+| `BP_Tile`            | Actor             |
+| `BP_Tower`           | Actor             |
+| `DA_ConfigData`      | Data Asset        |
+| `HowToPlay_TBS`      | Widget Blueprint  |
+| `HUD_TBS`            | Widget Blueprint  |
+| `MainMenu_TBS`       | Widget Blueprint  |
+| `MapConfig_TBS`      | Widget Blueprint  |
 
 ### Materiali
 
