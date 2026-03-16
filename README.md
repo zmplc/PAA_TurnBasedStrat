@@ -6,7 +6,7 @@ Questo progetto consiste nell'implementazione in Unreal Engine 5.6 di un gioco s
 ### Requisiti implementati
 
 * [ ] Il progetto compila correttamente, il codice è ben commentato e ben strutturato (polimorfismo ed ereditarietà).
-* [ ] Griglia di gioco iniziale graficamente corretta e interamente visibile nello schermo.
+* [x] Griglia di gioco iniziale graficamente corretta e interamente visibile nello schermo.
 * [x] Meccanismo di posizionamento Unità di Gioco e Torri come da specifiche
 * [x] AI che utilizza algoritmo A* (movimento e attacco).
 * [x] Il gioco funziona a turni e termina quando un giocatore vince
@@ -65,15 +65,24 @@ Di seguito è fornita una descrizione dei file principali organizzata per catego
 | `T_VictoryBackground`   | Texture immagine per schermata vittoria         |
 
 ## Risorse utilizzate
+
 - [Documentazione ufficiale Unreal Engine 5.6](https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-5-6-documentation?application_version=5.6)
-- [Variables, Timers, and Events - UE 5.6](https://dev.epicgames.com/documentation/en-us/unreal-engine/quick-start-guide-to-variables-timers-and-events-in-unreal-engine-cpp?application_version=5.6)
+- [Variables, Timers, and Events - Documentazione UE 5.6](https://dev.epicgames.com/documentation/en-us/unreal-engine/quick-start-guide-to-variables-timers-and-events-in-unreal-engine-cpp?application_version=5.6)
 - [Making maps with noise functions from Red Blob Games](https://www.redblobgames.com/maps/terrain-from-noise/)
 - [Top-down Shooter PNG pack from Kenney.nl](https://kenney.nl/assets/top-down-shooter)
 - [Introduction to the A-star Algorithm from Red Blob Games](https://www.redblobgames.com/pathfinding/a-star/introduction.html)
 - [A-star search algorithm Wikipedia](https://en.wikipedia.org/wiki/A*_search_algorithm#Pseudocode)
 - [Hexagonal Grids - sezione Distances from Red Blob Games](https://www.redblobgames.com/grids/hexagons/#distances)
 - [Chebyshev distance Wikipedia](https://en.wikipedia.org/wiki/Chebyshev_distance)
-- [FString Chr - UE](https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Runtime/Core/Containers/FString/Chr?application_version=5.3)
+- [FString Chr - Documentazione UE](https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Runtime/Core/Containers/FString/Chr?application_version=5.3)
 - [Greedy Best first search algorithm from GeeksforGeeks](https://www.geeksforgeeks.org/dsa/greedy-best-first-search-algorithm/)
 - [Greedy Best-First Search from CodeAcademy.com](https://www.codecademy.com/resources/docs/ai/search-algorithms/greedy-best-first-search)
-- [Lerp - UE](https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Runtime/Core/Math/FMath/Lerp?application_version=5.3)
+- [Lerp - Documentazione UE](https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Runtime/Core/Math/FMath/Lerp?application_version=5.3)
+
+## Configurazione iniziale
+
+Seguire i seguenti passaggi per configurare l'ambiente di sviluppo e compilare il progetto:
+
+1. **Generazione della soluzione Visual Studio**: il progetto non include il file `.sln`. Per crearlo è sufficiente individuare il file `.uproject` nella cartella principale del progetto, cliccare con il tasto destro e selezionare "Generate Visual Studio project files".
+2. **Starter Content**: il progetto utilizza asset provenienti dallo "Starter Content" di Unreal Engine. Per importare questi asset, aprire il progetto in Unreal Engine, andare nella sezione "Content Browser", cliccare sul pulsante "Add" e selezionare "Add Feature or Content Pack". Nella finestra che si apre, selezionare la tab "Content" e scegliere "Starter Content", cliccare poi su "Add to Project".
+3. **Prima compilazione**: dopo aver generato la soluzione Visual Studio, aprire il file `.sln`, selezionare la configurazione "Development Editor" e compilare il progetto.
