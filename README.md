@@ -5,7 +5,7 @@ Questo progetto consiste nell'implementazione in Unreal Engine 5.6 di un gioco s
 
 ### Requisiti implementati
 
-* [ ] Il progetto compila correttamente, il codice è ben commentato e ben strutturato (polimorfismo ed ereditarietà).
+* [x] Il progetto compila correttamente, il codice è ben commentato e ben strutturato (polimorfismo ed ereditarietà).
 * [x] Griglia di gioco iniziale graficamente corretta e interamente visibile nello schermo.
 * [x] Meccanismo di posizionamento Unità di Gioco e Torri come da specifiche
 * [x] AI che utilizza algoritmo A* (movimento e attacco).
@@ -37,7 +37,7 @@ Queste funzioni assegnano un punteggio a ciascuna mossa possibile e l'AI sceglie
 
 ### Movimento interpolato (Lerp)
 
-Il movimento delle unità è gestito tramite **Interpolazione Lineare** `Lerp` all'interno del metodo `Tick()` della classe `Unit`. per garantire un movimento fluido, evitando così che le unità si teletrasportino istantaneamente da una cella all'altra.
+Il movimento delle unità è gestito tramite **Interpolazione Lineare** `Lerp` all'interno del metodo `Tick()` della classe `Unit`, per garantire un movimento fluido, evitando così che le unità si teletrasportino istantaneamente da una cella all'altra.
 
 #### Logica di funzionamento
 
