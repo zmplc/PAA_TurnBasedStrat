@@ -390,7 +390,7 @@ int32 AUnit::GetMovementCost(int32 FromX, int32 FromY, int32 TargetX, int32 Targ
 			if (FMath::RoundToInt(OtherPos.X) == TargetX && FMath::RoundToInt(OtherPos.Y) == TargetY)
 			{
 				// C'è già un'altra unità sulla target tile
-				UE_LOG(LogTemp, Log, TEXT("GetMovementCost: Tile (%d, %d) occupata da %s"),	TargetX, TargetY, *OtherUnit->GetName());
+				UE_LOG(LogTemp, Log, TEXT("GetMovementCost: Tile (%d, %d) occupata da %s"), TargetX, TargetY, *OtherUnit->GetName());
 				return 0;
 			}
 		}
@@ -521,7 +521,7 @@ void AUnit::ApplyDamage(int32 DamageAmount, AUnit* Attacker, const AGameField* G
 		// Nascondo l'unità e disabilito collisioni
 		SetActorHiddenInGame(true);
 		SetActorEnableCollision(false);
-		
+
 		// Notifica GameMode per gestire respawn
 		if (ATBS_GameMode* GM = GetWorld()->GetAuthGameMode<ATBS_GameMode>())
 		{

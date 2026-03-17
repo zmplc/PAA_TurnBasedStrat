@@ -575,9 +575,9 @@ float AHeuristicPlayer::EvaluateTowerScore(ATower* Tower, FVector2D UnitPos)
 		// Torre neutrale = priorità massima
 		Score += 100.0f;
 	}
-	else if (Status == ETowerStatus::CONTROLLED && TowerOwner == PlayerID)
+	else if (Status == ETowerStatus::CONTROLLED && TowerOwner != PlayerID)
 	{
-		// Torre già dell'AI = da difendere ma dopo torre contesa/neutrale
+		// Torre del nemico = bassa priorità ma fare contesa se è vicina
 		Score += 80.0f;
 	}
 	else if (Status == ETowerStatus::CONTESTED)
@@ -585,9 +585,9 @@ float AHeuristicPlayer::EvaluateTowerScore(ATower* Tower, FVector2D UnitPos)
 		// Torre contesa = da difendere o conquistare
 		Score += 50.0f;
 	}
-	else if (Status == ETowerStatus::CONTROLLED && TowerOwner != PlayerID)
+	else if (Status == ETowerStatus::CONTROLLED && TowerOwner == PlayerID)
 	{
-		// Torre del nemico = bassa priorità ma fare contesa se è vicina
+		// Torre già dell'AI = da difendere ma dopo torre contesa/neutrale
 		Score += 30.0f;
 	}
 

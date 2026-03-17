@@ -16,7 +16,7 @@ Questo progetto consiste nell'implementazione in Unreal Engine 5.6 di un gioco s
 * [x] Lista dello storico delle mosse eseguite.
 * [x] AI che utilizza algoritmi euristici ottimizzati di movimento (diverso da A*).
 
-#### Note aggiuntive
+### Note aggiuntive
 
 - RandomPlayer è l'AI che utilizza l'algoritmo A* per muoversi e attaccare.
 - HeuristicPlayer è l'AI che utilizza algoritmi euristici ottimizzati di movimento.
@@ -24,7 +24,7 @@ Questo progetto consiste nell'implementazione in Unreal Engine 5.6 di un gioco s
 - Le barre della vità delle unità sono sempre visibili a schermo. In base ai punti vita delle unità le barre cambiano colore e dimensione: verde, giallo e rosso.
 - Nella schermata di configurazione della mappa, l'utente può scegliere i parametri dei 5 livelli della mappa (acqua, terreno, collina e montagne).
 
-#### HeuristicPlayer
+### HeuristicPlayer
 
 **HeuristicPlayer** è la classe che implementa un'AI basata su algoritmi euristici ottimizzati di movimento. Invece di utilizzare l'algoritmo A* (usato invece in RandomPlayer), HeuristicPlayer valuta le mosse possibili in base a funzioni euristiche che tengono conto di diversi fattori:
 - distanza dalle torri

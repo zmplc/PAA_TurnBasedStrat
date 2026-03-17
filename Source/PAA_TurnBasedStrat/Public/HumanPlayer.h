@@ -29,13 +29,13 @@ public:
 	// game instance reference
 	UTBS_GameInstance* GameInstance;
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
 	// keeps track of turn
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Turn")
 	bool IsMyTurn = false;
+
+protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
 
 	// Unità selezionata dal player
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Unit")

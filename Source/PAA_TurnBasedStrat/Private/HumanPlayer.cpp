@@ -46,10 +46,7 @@ void AHumanPlayer::Tick(float DeltaTime)
 // Called to bind functionality to input
 void AHumanPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-    // Bind clic sinistro
-    PlayerInputComponent->BindAction("LeftMouseClick", IE_Pressed, this, &AHumanPlayer::OnClick);
+    Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
 void AHumanPlayer::OnPlacementTurnStart()
@@ -318,6 +315,9 @@ void AHumanPlayer::OnLose()
 
 void AHumanPlayer::OnClick()
 {
+    // Se non è il mio turno faccio return
+    if (!IsMyTurn) return;
+
     UE_LOG(LogTemp, Log, TEXT("HumanPlayer: Clic sinistro rilevato"));
 
     // Raycast sotto il cursore

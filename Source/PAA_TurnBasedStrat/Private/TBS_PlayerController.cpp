@@ -3,6 +3,7 @@
 
 #include "TBS_PlayerController.h"
 #include "HumanPlayer.h"
+#include "TBS_GameMode.h"
 
 ATBS_PlayerController::ATBS_PlayerController() 
 {
@@ -12,7 +13,9 @@ ATBS_PlayerController::ATBS_PlayerController()
 
 void ATBS_PlayerController::ClickOnGrid() 
 {
-	if (AHumanPlayer* HumanPawn = Cast<AHumanPlayer>(GetPawn()))
+	ATBS_GameMode* GM = GetWorld()->GetAuthGameMode<ATBS_GameMode>();
+	AHumanPlayer* HumanPawn = Cast<AHumanPlayer>(GetPawn());
+	if (HumanPawn && GM && GM->CurrentPlayer == 0)
 	{
 		HumanPawn->OnClick();
 	}
@@ -20,7 +23,9 @@ void ATBS_PlayerController::ClickOnGrid()
 
 void ATBS_PlayerController::SelectSniper()
 {
-	if (AHumanPlayer* HumanPawn = Cast<AHumanPlayer>(GetPawn()))
+	ATBS_GameMode* GM = GetWorld()->GetAuthGameMode<ATBS_GameMode>();
+	AHumanPlayer* HumanPawn = Cast<AHumanPlayer>(GetPawn());
+	if (HumanPawn && GM && GM->CurrentPlayer == 0)
 	{
 		HumanPawn->SelectSniperForPlacement();
 	}
@@ -28,7 +33,9 @@ void ATBS_PlayerController::SelectSniper()
 
 void ATBS_PlayerController::SelectBrawler()
 {
-	if (AHumanPlayer* HumanPawn = Cast<AHumanPlayer>(GetPawn()))
+	ATBS_GameMode* GM = GetWorld()->GetAuthGameMode<ATBS_GameMode>();
+	AHumanPlayer* HumanPawn = Cast<AHumanPlayer>(GetPawn());
+	if (HumanPawn && GM && GM->CurrentPlayer == 0)
 	{
 		HumanPawn->SelectBrawlerForPlacement();
 	}
