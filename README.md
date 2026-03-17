@@ -35,6 +35,21 @@ Questo progetto consiste nell'implementazione in Unreal Engine 5.6 di un gioco s
 
 Queste funzioni assegnano un punteggio a ciascuna mossa possibile e l'AI sceglie la mossa con il punteggio più alto, cercando così di massimizzare le proprie possibilità di vittoria.
 
+### Movimento interpolato (Lerp)
+
+Il movimento delle unità è gestito tramite **Interpolazione Lineare** `Lerp` all'interno del metodo `Tick()` della classe `Unit`. per garantire un movimento fluido, evitando così che le unità si teletrasportino istantaneamente da una cella all'altra.
+
+#### Logica di funzionamento
+
+Il sistema calcola la posizione dell'unità in ogni frame, interpolando tra la posizione attuale e la posizione di destinazione, utilizzando i seguenti parametri:
+- **Alpha**: valore normalizzato tra `0.0f` a `1.0f` che rappresenta la progressione del movimento. Viene calcolato come il rapporto tra il tempo trascorso (`MovementElapsedTime`) dall'inizio del movimento e la durata totale del movimento tra le due celle (`MovementDuration`).
+- **MovementStartLocation**: posizione iniziale dell'unità all'inizio del movimento.
+- **MovementTargetLocation**: posizione finale che l'unità deve raggiungere.
+- **`FMath::Lerp`**: funzione di Unreal Engine che calcola la posizione interpolata in base a `Alpha`, `MovementStartLocation` e `MovementTargetLocation`. Calcola la posizione intermedia dell'unità in ogni frame, in base al valore di Alpha, creano così un movimento fluido ed evitando il teletrasporto istantaneo.
+- **Pathfinding**: l'unità deve seguire un percorso di tile, quindi il sistema gestisce una coda di posizioni di destinazione (le celle del percorso per arrivare alla target tile). Una volta raggiunto `Alpha >= 1.0f` per la cella corrente, viene impostata la destinazione precedente come nuova partenza e l'indice dell'array `[CurrentPathIndex]` viene incrementato per passare alla cella successiva del percorso, finché l'intero array `MovementPath` non viene esaurito.
+
+**Osservazione**: dopo il controllo su `Alpha >= 1.0f` viene effettuata l'assegnazione esplicita dell'unità alla posizione target con `SetActorLocation(MovementTargetLocation);`, questo viene fatto per garantire che l'unità raggiunga esattamente la posizione target ed evitare bug nel posizionamento, siccome nel calcolo di `NewLocation` tramite `Lerp` potrebbero verificarsi errori di approssimazione nel calcolo dell'interpolazione.
+
 ## Descrizione dei file principali
 Di seguito è fornita una descrizione dei file principali organizzata per categoria, con dettagli aggiuntivi sui file più rilevanti.
 
