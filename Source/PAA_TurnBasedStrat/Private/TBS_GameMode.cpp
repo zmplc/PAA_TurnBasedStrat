@@ -351,6 +351,8 @@ void ATBS_GameMode::TurnNextPlayer(int32 PlayerID)
 void ATBS_GameMode::CheckVictoryCondition()
 {
 	// NB: devo controllare i turni con 2 TORRI CONQUISTATE DALLO STESSO PLAYER
+	// esempio, nel turno 12 ho conquistato le torri, l'IA gioca il turno 13, Il player gioca il turno 14 , l'IA gioca il turno 15, se all'inizio del turno 16 il player ha mantenuto le 2 torri ha vinto
+	// Devo quindi considerare 4 turni con 2 torri consecutive
 	// Log
 	UE_LOG(LogTemp, Log, TEXT("CheckVictoryCondition: controllo vittoria per il turno n° %d"), TurnCounter);
 
@@ -359,7 +361,7 @@ void ATBS_GameMode::CheckVictoryCondition()
 	{
 		HumanConsecutiveWithTwoTowers++;
 		UE_LOG(LogTemp, Log, TEXT("HumanPlayer controlla %d torri con conquiste consecutive: %d"), HumanTowersControlled, HumanConsecutiveWithTwoTowers);
-		if (HumanConsecutiveWithTwoTowers >= 3)
+		if (HumanConsecutiveWithTwoTowers >= 4)
 		{
 			// HumanPlayer vince
 			OnGameEnd(0);
@@ -376,7 +378,7 @@ void ATBS_GameMode::CheckVictoryCondition()
 	if (AiTowersControlled >= 2)
 	{
 		AiConsecutiveWithTwoTowers++;
-		if (AiConsecutiveWithTwoTowers >= 3)
+		if (AiConsecutiveWithTwoTowers >= 4)
 		{
 			// AI vince
 			OnGameEnd(1);
