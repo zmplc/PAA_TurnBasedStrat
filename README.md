@@ -119,33 +119,33 @@ Di seguito è fornita una descrizione dei file principali organizzata per catego
 
 ### Texture
 
-| Texture                 | Descrizione											  | Percorso              |
-|-------------------------|-------------------------------------------------------|-----------------------|
-| `T_AiTowerCount`		  | Texture immagine per icona torre AI					  | `Content/Textures/`   |
-| `T_Brawler_AI`		  | Brawler robot per AI								  | `Content/Textures/`   |
-| `T_Brawler_Human`		  | Brawler umano per HumanPlayer						  | `Content/Textures/`   |
-| `T_Bullet`		      | Texture immagine per proiettile						  | `Content/Textures/`   |
-| `T_FloorLevel`		  | Texture immagine dello spazio usata come sfondo		  | `Content/Textures/`   |
-| `T_HumanTowerCount`	  | Texture immagine per icona torre Human				  | `Content/Textures/`   |
-| `T_Knife`		          | Texture immagine per arma corpo a corpo				  | `Content/Textures/`   |
-| `T_MainBackground`      | Texture immagine per le schermate widget HUD		  | `Content/Textures/`   |
-| `T_Sniper_AI`			  | Sniper robot per AI									  | `Content/Textures/`   |
-| `T_Sniper_Human`        | Sniper umano per HumanPlayer						  | `Content/Textures/`   |
-| `T_VictoryBackground`   | Texture immagine per schermata vittoria				  | `Content/Textures/`   |
-| `BlueButton`		      | Texture per stato Normal per bottone blu			  | `Content/Textures/UI` |
-| `BlueHoveredButton`	  | Texture per stato Hovered per bottone blu			  | `Content/Textures/UI` |
-| `BluePressedButton`	  | Texture per stato Pressed per bottone blu			  | `Content/Textures/UI` |
-| `GreenButton`		      | Texture per stato Normal per bottone verde			  | `Content/Textures/UI` |
-| `GreenHoveredButton`	  | Texture per stato Hovered per bottone verde			  | `Content/Textures/UI` |
-| `GreenPressedButton`	  | Texture per stato Pressed per bottone verde			  | `Content/Textures/UI` |
-| `RedButton`		      | Texture per stato Normal per bottone rosso			  | `Content/Textures/UI` |
-| `RedHoveredButton`	  | Texture per stato Hovered per bottone rosso			  | `Content/Textures/UI` |
-| `RedPressedButton`	  | Texture per stato Pressed per bottone rosso			  | `Content/Textures/UI` |
-| `SliderCircle`		  | Texture per lo stato Normal del cursore dello slider  | `Content/Textures/UI` |
-| `SliderOutlineCircle`	  | Texture per lo stato Hovered del cursore dello slider | `Content/Textures/UI` |
-| `YellowButton`		  | Texture per stato Normal per bottone giallo			  | `Content/Textures/UI` |
-| `YellowHoveredButton`	  | Texture per stato Hovered per bottone giallo		  | `Content/Textures/UI` |
-| `YellowPressedButton`	  | Texture per stato Pressed per bottone giallo		  | `Content/Textures/UI` |
+| Texture                 | Descrizione											  | Percorso               |
+|-------------------------|-------------------------------------------------------|------------------------|
+| `T_AiTowerCount`		  | Texture immagine per icona torre AI					  | `Content/Textures/`    |
+| `T_Brawler_AI`		  | Brawler robot per AI								  | `Content/Textures/`    |
+| `T_Brawler_Human`		  | Brawler umano per HumanPlayer						  | `Content/Textures/`    |
+| `T_Bullet`		      | Texture immagine per proiettile						  | `Content/Textures/`    |
+| `T_FloorLevel`		  | Texture immagine dello spazio usata come sfondo		  | `Content/Textures/`    |
+| `T_HumanTowerCount`	  | Texture immagine per icona torre Human				  | `Content/Textures/`    |
+| `T_Knife`		          | Texture immagine per arma corpo a corpo				  | `Content/Textures/`    |
+| `T_MainBackground`      | Texture immagine per le schermate widget HUD		  | `Content/Textures/`    |
+| `T_Sniper_AI`			  | Sniper robot per AI									  | `Content/Textures/`    |
+| `T_Sniper_Human`        | Sniper umano per HumanPlayer						  | `Content/Textures/`    |
+| `T_VictoryBackground`   | Texture immagine per schermata vittoria				  | `Content/Textures/`    |
+| `BlueButton`		      | Texture per stato Normal per bottone blu			  | `Content/Textures/UI/` |
+| `BlueHoveredButton`	  | Texture per stato Hovered per bottone blu			  | `Content/Textures/UI/` |
+| `BluePressedButton`	  | Texture per stato Pressed per bottone blu			  | `Content/Textures/UI/` |
+| `GreenButton`		      | Texture per stato Normal per bottone verde			  | `Content/Textures/UI/` |
+| `GreenHoveredButton`	  | Texture per stato Hovered per bottone verde			  | `Content/Textures/UI/` |
+| `GreenPressedButton`	  | Texture per stato Pressed per bottone verde			  | `Content/Textures/UI/` |
+| `RedButton`		      | Texture per stato Normal per bottone rosso			  | `Content/Textures/UI/` |
+| `RedHoveredButton`	  | Texture per stato Hovered per bottone rosso			  | `Content/Textures/UI/` |
+| `RedPressedButton`	  | Texture per stato Pressed per bottone rosso			  | `Content/Textures/UI/` |
+| `SliderCircle`		  | Texture per lo stato Normal del cursore dello slider  | `Content/Textures/UI/` |
+| `SliderOutlineCircle`	  | Texture per lo stato Hovered del cursore dello slider | `Content/Textures/UI/` |
+| `YellowButton`		  | Texture per stato Normal per bottone giallo			  | `Content/Textures/UI/` |
+| `YellowHoveredButton`	  | Texture per stato Hovered per bottone giallo		  | `Content/Textures/UI/` |
+| `YellowPressedButton`	  | Texture per stato Pressed per bottone giallo		  | `Content/Textures/UI/` |
 
 ## Risorse utilizzate
 
