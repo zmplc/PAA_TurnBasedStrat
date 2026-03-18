@@ -50,6 +50,14 @@ Il sistema calcola la posizione dell'unità in ogni frame, interpolando tra la p
 
 **Osservazione**: dopo il controllo su `Alpha >= 1.0f` viene effettuata l'assegnazione esplicita dell'unità alla posizione target con `SetActorLocation(MovementTargetLocation);`, questo viene fatto per garantire che l'unità raggiunga esattamente la posizione target ed evitare bug nel posizionamento, siccome nel calcolo di `NewLocation` tramite `Lerp` potrebbero verificarsi errori di approssimazione nel calcolo dell'interpolazione.
 
+## Configurazione iniziale
+
+Seguire i seguenti passaggi per configurare l'ambiente di sviluppo e compilare il progetto:
+
+1. **Generazione della soluzione Visual Studio**: il progetto non include il file `.sln`. Per crearlo è sufficiente individuare il file `.uproject` nella cartella principale del progetto, cliccare con il tasto destro e selezionare "Generate Visual Studio project files".
+2. **Starter Content**: il progetto utilizza asset provenienti dallo "Starter Content" di Unreal Engine. Per importare questi asset, aprire il progetto in Unreal Engine, andare nella sezione "Content Browser", cliccare sul pulsante "Add" e selezionare "Add Feature or Content Pack". Nella finestra che si apre, selezionare la tab "Content" e scegliere "Starter Content", cliccare poi su "Add to Project".
+3. **Prima compilazione**: dopo aver generato la soluzione Visual Studio, aprire il file `.sln`, selezionare la configurazione "Development Editor" e compilare il progetto.
+
 ## Descrizione dei file principali
 Di seguito è fornita una descrizione dei file principali organizzata per categoria, con dettagli aggiuntivi sui file più rilevanti.
 
@@ -111,19 +119,33 @@ Di seguito è fornita una descrizione dei file principali organizzata per catego
 
 ### Texture
 
-| Texture                 | Descrizione                                     |
-|-------------------------|-------------------------------------------------|
-| `T_AiTowerCount`		  | Texture immagine per icona torre AI             |
-| `T_Brawler_AI`		  | Brawler robot per AI                            |
-| `T_Brawler_Human`		  | Brawler umano per HumanPlayer                   |
-| `T_Bullet`		      | Texture immagine per proiettile                 |
-| `T_FloorLevel`		  | Texture immagine dello spazio usata come sfondo |
-| `T_HumanTowerCount`	  | Texture immagine per icona torre Human          |
-| `T_Knife`		          | Texture immagine per arma corpo a corpo         |
-| `T_MainBackground`      | Texture immagine per le schermate widget HUD    |
-| `T_Sniper_AI`			  | Sniper robot per AI                             |
-| `T_Sniper_Human`        | Sniper umano per HumanPlayer                    |
-| `T_VictoryBackground`   | Texture immagine per schermata vittoria         |
+| Texture                 | Descrizione											  | Percorso              |
+|-------------------------|-------------------------------------------------------|-----------------------|
+| `T_AiTowerCount`		  | Texture immagine per icona torre AI					  | `Content/Textures/`   |
+| `T_Brawler_AI`		  | Brawler robot per AI								  | `Content/Textures/`   |
+| `T_Brawler_Human`		  | Brawler umano per HumanPlayer						  | `Content/Textures/`   |
+| `T_Bullet`		      | Texture immagine per proiettile						  | `Content/Textures/`   |
+| `T_FloorLevel`		  | Texture immagine dello spazio usata come sfondo		  | `Content/Textures/`   |
+| `T_HumanTowerCount`	  | Texture immagine per icona torre Human				  | `Content/Textures/`   |
+| `T_Knife`		          | Texture immagine per arma corpo a corpo				  | `Content/Textures/`   |
+| `T_MainBackground`      | Texture immagine per le schermate widget HUD		  | `Content/Textures/`   |
+| `T_Sniper_AI`			  | Sniper robot per AI									  | `Content/Textures/`   |
+| `T_Sniper_Human`        | Sniper umano per HumanPlayer						  | `Content/Textures/`   |
+| `T_VictoryBackground`   | Texture immagine per schermata vittoria				  | `Content/Textures/`   |
+| `BlueButton`		      | Texture per stato Normal per bottone blu			  | `Content/Textures/UI` |
+| `BlueHoveredButton`	  | Texture per stato Hovered per bottone blu			  | `Content/Textures/UI` |
+| `BluePressedButton`	  | Texture per stato Pressed per bottone blu			  | `Content/Textures/UI` |
+| `GreenButton`		      | Texture per stato Normal per bottone verde			  | `Content/Textures/UI` |
+| `GreenHoveredButton`	  | Texture per stato Hovered per bottone verde			  | `Content/Textures/UI` |
+| `GreenPressedButton`	  | Texture per stato Pressed per bottone verde			  | `Content/Textures/UI` |
+| `RedButton`		      | Texture per stato Normal per bottone rosso			  | `Content/Textures/UI` |
+| `RedHoveredButton`	  | Texture per stato Hovered per bottone rosso			  | `Content/Textures/UI` |
+| `RedPressedButton`	  | Texture per stato Pressed per bottone rosso			  | `Content/Textures/UI` |
+| `SliderCircle`		  | Texture per lo stato Normal del cursore dello slider  | `Content/Textures/UI` |
+| `SliderOutlineCircle`	  | Texture per lo stato Hovered del cursore dello slider | `Content/Textures/UI` |
+| `YellowButton`		  | Texture per stato Normal per bottone giallo			  | `Content/Textures/UI` |
+| `YellowHoveredButton`	  | Texture per stato Hovered per bottone giallo		  | `Content/Textures/UI` |
+| `YellowPressedButton`	  | Texture per stato Pressed per bottone giallo		  | `Content/Textures/UI` |
 
 ## Risorse utilizzate
 
@@ -139,11 +161,4 @@ Di seguito è fornita una descrizione dei file principali organizzata per catego
 - [Greedy Best first search algorithm from GeeksforGeeks](https://www.geeksforgeeks.org/dsa/greedy-best-first-search-algorithm/)
 - [Greedy Best-First Search from CodeAcademy.com](https://www.codecademy.com/resources/docs/ai/search-algorithms/greedy-best-first-search)
 - [Lerp - Documentazione UE](https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Runtime/Core/Math/FMath/Lerp?application_version=5.3)
-
-## Configurazione iniziale
-
-Seguire i seguenti passaggi per configurare l'ambiente di sviluppo e compilare il progetto:
-
-1. **Generazione della soluzione Visual Studio**: il progetto non include il file `.sln`. Per crearlo è sufficiente individuare il file `.uproject` nella cartella principale del progetto, cliccare con il tasto destro e selezionare "Generate Visual Studio project files".
-2. **Starter Content**: il progetto utilizza asset provenienti dallo "Starter Content" di Unreal Engine. Per importare questi asset, aprire il progetto in Unreal Engine, andare nella sezione "Content Browser", cliccare sul pulsante "Add" e selezionare "Add Feature or Content Pack". Nella finestra che si apre, selezionare la tab "Content" e scegliere "Starter Content", cliccare poi su "Add to Project".
-3. **Prima compilazione**: dopo aver generato la soluzione Visual Studio, aprire il file `.sln`, selezionare la configurazione "Development Editor" e compilare il progetto.
+- [UI Pack from Kenney.nl](https://kenney.nl/assets/ui-pack)
