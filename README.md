@@ -220,3 +220,4 @@ Per quanto riguarda l'audio, nel progetto ho utilizzato Sound Cue per gestire gl
 - [Greedy Best-First Search from CodeAcademy.com](https://www.codecademy.com/resources/docs/ai/search-algorithms/greedy-best-first-search)
 - [Lerp - Documentazione UE](https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Runtime/Core/Math/FMath/Lerp?application_version=5.3)
 - [UI Pack from Kenney.nl](https://kenney.nl/assets/ui-pack)
+- [Play Sound at Location - Documentazione UE](https://dev.epicgames.com/documentation/en-us/unreal-engine/BlueprintAPI/Audio/PlaySoundatLocation?application_version=5.7)
