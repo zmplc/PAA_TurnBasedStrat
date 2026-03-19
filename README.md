@@ -114,10 +114,10 @@ Di seguito è fornita una descrizione dei file principali organizzata per catego
 
 ### Fonts
 
-| Font			   | Descrizione									 | Percorso			|
-|------------------|-------------------------------------------------|------------------|
-| Font_Main		   | Font principale utilizzato per i testi dell'HUD | `Content/Fonts/` |
-| Font_Main_Narrow | Variante del font principale a largheza ridotta | `Content/Fonts/` |
+| Font			     | Descrizione									   | Percorso		  |
+|--------------------|-------------------------------------------------|------------------|
+| `Font_Main`		 | Font principale utilizzato per i testi dell'HUD | `Content/Fonts/` |
+| `Font_Main_Narrow` | Variante del font principale a largheza ridotta | `Content/Fonts/` |
 
 ### Input
 
