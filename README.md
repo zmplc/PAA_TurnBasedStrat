@@ -80,6 +80,12 @@ Di seguito è fornita una descrizione dei file principali organizzata per catego
 | `UnitBrawler.h/.cpp`			| Pawn (inherits from `AUnit`) |
 | `UnitSniper.h/.cpp`			| Pawn (inherits from `AUnit`) |
 
+### Audio
+
+| File			| Descrizione				   | Percorso		   |
+|---------------|------------------------------|-------------------|
+| `ClickButton` | Suono di click per i bottoni | `Content/Audios/` |
+
 ### Blueprint
 
 | Blueprint            | Tipo              |
@@ -103,6 +109,29 @@ Di seguito è fornita una descrizione dei file principali organizzata per catego
 | `HUD_TBS`            | Widget Blueprint  |
 | `MainMenu_TBS`       | Widget Blueprint  |
 | `MapConfig_TBS`      | Widget Blueprint  |
+
+### Fonts
+
+| Font			   | Descrizione									 | Percorso			|
+|------------------|-------------------------------------------------|------------------|
+| Font_Main		   | Font principale utilizzato per i testi dell'HUD | `Content/Fonts/` |
+| Font_Main_Narrow | Variante del font principale a largheza ridotta | `Content/Fonts/` |
+
+### Input
+
+| Asset				 | Descrizione																| Percorso		   |
+|--------------------|--------------------------------------------------------------------------|------------------|
+| `IA_Click`		 | Azione associata al click sinistro del mouse								| `Content/Input/` |
+| `IA_SelectBrawler` | Azione associata al tasto 2 per la selezione del brawler					| `Content/Input/` |
+| `IA_SelectSniper`  | Azione associata al tasto 1 per la selezione dello sniper				| `Content/Input/` |
+| `IMC_Context`		 | Input Mapping Context che mappa le azioni sopra indicate ai tasti fisici | `Content/Input/` |
+
+### Livelli
+
+| Livello			| Descrizione																															  | Percorso	      |
+|-------------------|-----------------------------------------------------------------------------------------------------------------------------------------|-------------------|
+| `Level_GameField` | Livello principale contenente la griglia di gioco, la logica di combattimento tra le unità e il sistema di conquista delle torri        | `Content/Levels/` |
+| `MainMenu`		| Scena iniziale dedicata alla gestione dell'avvio del gioco, scelta dei parametri per la generazione della mappa e dell'AI da affrontare | `Content/Levels/` |
 
 ### Materiali
 
