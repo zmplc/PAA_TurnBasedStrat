@@ -305,8 +305,29 @@ ATile* ARandomPlayer::FindRandomValidTile(AGameField* GameField)
 
 			if (Tile && Tile->IsWalkable() && Tile->GetTileType() != ETileType::TOWER)
 			{
-				// Se la tile è valida la aggiungo nell'array
-				ValidTiles.Add(Tile);
+				// Devo controllare quali sono le tile libere e che non sono occupate dall'unità già piazzata
+				bool bTileOccupied = false;
+				for (TActorIterator<AUnit> It(GetWorld()); It; ++It)
+				{
+					AUnit* Unit = *It;
+					if (Unit && Unit->IsAlive())
+					{
+						FVector2D UnitPos = Unit->GetCurrentGridPosition();
+						int32 UnitX = FMath::RoundToInt(UnitPos.X);
+						int32 UnitY = FMath::RoundToInt(UnitPos.Y);
+
+						if (UnitX == X && UnitY == Y)
+						{
+							bTileOccupied = true;
+							break;
+						}
+					}
+				}
+				// Se la tile non è occupata dalla prima unità allora la aggiungo all'array delle tile valide per il piazzamento
+				if (!bTileOccupied)
+				{
+					ValidTiles.Add(Tile);
+				}
 			}
 		}
 	}
