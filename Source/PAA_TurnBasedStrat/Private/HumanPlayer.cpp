@@ -197,6 +197,8 @@ void AHumanPlayer::SelectUnit(AUnit* Unit)
         {
             // Nascondo range
             HideMovementRange();
+            // Nascondo icone attacco
+            HideAttackIndicators();
             UE_LOG(LogTemp, Log, TEXT("HumanPlayer: Range nascosto"));
             if (GameInstance)
             {
@@ -216,9 +218,9 @@ void AHumanPlayer::SelectUnit(AUnit* Unit)
         {
             // Mostro range
             ShowMovementRange(Unit);
-            if (GameInstance)
+            if (!Unit->bHasAttackedThisTurn)
             {
-                GameInstance->SetTurnMessage(TEXT("Range mostrato"));
+                ShowAttackIndicators(Unit);
             }
         }
         return;
@@ -228,6 +230,8 @@ void AHumanPlayer::SelectUnit(AUnit* Unit)
 
     // Nascondo range movimento precedente
     HideMovementRange();
+    // Nascondo icone attacco precedenti
+    HideAttackIndicators();
 
     // Deseleziono l'unità
     if (SelectedUnit)
@@ -255,6 +259,11 @@ void AHumanPlayer::SelectUnit(AUnit* Unit)
 
     // Mostro il range di movimento quando seleziono una nuova unità
     ShowMovementRange(Unit);
+    // Mostro icone attacco se unità non ha ancora attaccato
+    if (!Unit->bHasAttackedThisTurn)
+    {
+        ShowAttackIndicators(Unit);
+    }
 
     UE_LOG(LogTemp, Log, TEXT("HumanPlayer: Unita' selezionata - %s"), *Unit->GetName());
 
@@ -296,6 +305,8 @@ void AHumanPlayer::OnWin()
     }
     // Nascondo range movimento
     HideMovementRange();
+    // Nascondo icone di attacco
+    HideAttackIndicators();
 }
 
 void AHumanPlayer::OnLose()
@@ -311,6 +322,8 @@ void AHumanPlayer::OnLose()
     }
     // Nascondo range movimento
     HideMovementRange();
+    // Nascondo icone di attacco
+    HideAttackIndicators();
 }
 
 void AHumanPlayer::OnClick()
@@ -437,6 +450,8 @@ void AHumanPlayer::OnClick()
                 FVector2D OldPos = SelectedUnit->GetCurrentGridPosition();
                 // Nascondo range di movimento
                 HideMovementRange();
+                // Nascondo icone di attacco
+                HideAttackIndicators();
                 // Rimuovo highlight tile
                 ATile* OldTile = GM->GField->GetTileAtPosition(FMath::RoundToInt(OldPos.X), FMath::RoundToInt(OldPos.Y));
                 // Muovo l'unità
@@ -469,6 +484,11 @@ void AHumanPlayer::OnClick()
                 if (NewTile)
                 {
                     NewTile->HighlightTile(true);
+                }
+                // Mostro icone di attacco se l'unità dopo il movimento non ha ancora attaccato
+                if (!SelectedUnit->bHasAttackedThisTurn)
+                {
+                    ShowAttackIndicators(SelectedUnit);
                 }
                 // Blocco unità
                 bFirstUnitHasActed = true;
@@ -551,6 +571,8 @@ void AHumanPlayer::OnClick()
 
                 // Nascondo range movimento
                 HideMovementRange();
+                // Nascondo icone di attacco
+                HideAttackIndicators();
 
                 FVector2D AttackerPos = SelectedUnit->GetCurrentGridPosition();
                 ATile* AttackerTile = GM->GField->GetTileAtPosition(FMath::RoundToInt(AttackerPos.X), FMath::RoundToInt(AttackerPos.Y));
@@ -783,4 +805,72 @@ bool AHumanPlayer::ShowEndTurnButton() const
     // -Ci sono ancora azioni disponibili da fare
     bool bShouldShow = (UnitsActed == TotalUnits && bAtLeastOneOnlyMoved && PendingTurnActions());
     return bShouldShow;
+}
+
+void AHumanPlayer::ShowAttackIndicators(AUnit* Unit)
+{
+    if (!Unit) return;
+
+    ATBS_GameMode* GM = Cast<ATBS_GameMode>(GetWorld()->GetAuthGameMode());
+    if (!GM || !GM->GField) return;
+
+    // Nascondo le icone di attacco precedenti
+    HideAttackIndicators();
+
+    UE_LOG(LogTemp, Log, TEXT("HumanPlayer: Mostro icone attacco sui target"));
+
+    // Trovo le unità nemiche attaccabili e mostro l'icona sopra di loro
+    for (TActorIterator<AUnit> It(GetWorld()); It; ++It)
+    {
+        AUnit* Enemy = *It;
+        // Se l'unità è nemica ed è viva allora controllo se può essere attaccata dall'unità selezionata da HumanPlayer
+        if (Enemy && Enemy->OwnerPlayerID != PlayerID && Enemy->IsAlive())
+        {
+            // Se l'unità selezionata può attaccare Enemy allora mostro l'icona
+            if (Unit->CanAttack(Enemy, GM->GField))
+            {
+                // Spawno icona attacco sopra il target nemico
+                if (AttackIndicatorClass)
+                {
+                    FVector SpawnLoc = Enemy->GetActorLocation();
+
+                    AAttackIndicator* Indicator = GetWorld()->SpawnActor<AAttackIndicator>(
+                        AttackIndicatorClass,
+                        SpawnLoc,
+                        FRotator::ZeroRotator
+                    );
+
+                    if (Indicator)
+                    {
+                        Indicator->SetTargetUnit(Enemy);
+                        AttackIndicators.Add(Indicator);
+
+                        UE_LOG(LogTemp, Log, TEXT("HumanPlayer: Icona attacco su %s"), *Enemy->GetName());
+                    }
+                }
+                else
+                {
+                    UE_LOG(LogTemp, Warning, TEXT("HumanPlayer: AttackIndicatorClass non assegnato"));
+                }
+            }
+        }
+    }
+}
+
+void AHumanPlayer::HideAttackIndicators()
+{
+    if (AttackIndicators.Num() == 0) return;
+
+    UE_LOG(LogTemp, Log, TEXT("HumanPlayer: Nascondo icone attacco che erano sui target"));
+
+    // Distruggo tutte le icone nell'array
+    for (AAttackIndicator* Indicator : AttackIndicators)
+    {
+        if (Indicator && IsValid(Indicator))
+        {
+            Indicator->Destroy();
+        }
+    }
+    // Svuoto l'array per prossime icone attacco da aggiungere
+    AttackIndicators.Empty();
 }

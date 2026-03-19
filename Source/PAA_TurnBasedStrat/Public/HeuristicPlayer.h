@@ -6,6 +6,7 @@
 #include "GameFramework/Pawn.h"
 #include "PlayerInterface.h"
 #include "TBS_GameInstance.h"
+#include "AttackIndicator.h"
 #include "Kismet/GameplayStatics.h"
 #include "HeuristicPlayer.generated.h"
 
@@ -47,6 +48,14 @@ public:
     // Brawler piazzato: y/n
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Unit")
     bool bHasPlacedBrawler;
+
+    // Array per tenere traccia delle icone di attacco attive sui target (per poi rimuoverle)
+    UPROPERTY()
+    TArray<class AAttackIndicator*> AttackIndicators;
+
+    // Classe dell'icona di attacco da assegnare nel Blueprint
+    UPROPERTY(EditDefaultsOnly, Category = "Unit")
+    TSubclassOf<class AAttackIndicator> AttackIndicatorClass;
 
 protected:
     virtual void BeginPlay() override;
@@ -127,6 +136,14 @@ public:
     // Funzione per mostrare range movimento con timing delle unità dell'AI
     UFUNCTION()
     void ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATBS_GameMode* GM);
+
+    // Funzione per mostrare icone di attacco sui target
+    UFUNCTION()
+    void ShowAttackIndicators(AUnit* Unit, AGameField* GameField);
+
+    // Funzione per nascondere icone di attacco sui target
+    UFUNCTION()
+    void HideAttackIndicators(AGameField* GameField);
 
 private:
     FTimerHandle AI_TurnTimerHandle;

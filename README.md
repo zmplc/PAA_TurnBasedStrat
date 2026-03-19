@@ -65,6 +65,7 @@ Di seguito è fornita una descrizione dei file principali organizzata per catego
 
 | File							| Tipo						   |
 |-------------------------------|------------------------------|
+| `AttackIndicator.h/.cpp`		| Actor						   |
 | `ConfigData.h/.cpp`			| Data Asset				   |
 | `GameField.h/.cpp`			| Actor						   |
 | `HeuristicPlayer.h/.cpp`		| Pawn						   |
@@ -88,27 +89,28 @@ Di seguito è fornita una descrizione dei file principali organizzata per catego
 
 ### Blueprint
 
-| Blueprint            | Tipo              |
-|----------------------|-------------------|
-| `BP_Brawler_AI`      | Pawn              |
-| `BP_Brawler_Human`   | Pawn              |
-| `BP_GameField`       | Actor             |
-| `BP_GameInstance`    | Game Instance     |
-| `BP_GameMode`        | Game Mode         |
-| `BP_HeuristicPlayer` | Pawn              |
-| `BP_HumanPlayer`     | Pawn              |
-| `BP_MenuGameMode`    | Game Mode         |
-| `BP_PlayerController`| Player Controller |
-| `BP_RandomPlayer`    | Pawn              |
-| `BP_Sniper_AI`       | Pawn              |
-| `BP_Sniper_Human`    | Pawn              |
-| `BP_Tile`            | Actor             |
-| `BP_Tower`           | Actor             |
-| `DA_ConfigData`      | Data Asset        |
-| `HowToPlay_TBS`      | Widget Blueprint  |
-| `HUD_TBS`            | Widget Blueprint  |
-| `MainMenu_TBS`       | Widget Blueprint  |
-| `MapConfig_TBS`      | Widget Blueprint  |
+| Blueprint            | Tipo              | Percorso			   |
+|----------------------|-------------------|-----------------------|
+| `BP_AttackIndicator` | Actor             | `Content/Blueprints/` |
+| `BP_Brawler_AI`      | Pawn              | `Content/Blueprints/` |
+| `BP_Brawler_Human`   | Pawn              | `Content/Blueprints/` |
+| `BP_GameField`       | Actor             | `Content/Blueprints/` |
+| `BP_GameInstance`    | Game Instance     | `Content/Blueprints/` |
+| `BP_GameMode`        | Game Mode         | `Content/Blueprints/` |
+| `BP_HeuristicPlayer` | Pawn              | `Content/Blueprints/` |
+| `BP_HumanPlayer`     | Pawn              | `Content/Blueprints/` |
+| `BP_MenuGameMode`    | Game Mode         | `Content/Blueprints/` |
+| `BP_PlayerController`| Player Controller | `Content/Blueprints/` |
+| `BP_RandomPlayer`    | Pawn              | `Content/Blueprints/` |
+| `BP_Sniper_AI`       | Pawn              | `Content/Blueprints/` |
+| `BP_Sniper_Human`    | Pawn              | `Content/Blueprints/` |
+| `BP_Tile`            | Actor             | `Content/Blueprints/` |
+| `BP_Tower`           | Actor             | `Content/Blueprints/` |
+| `DA_ConfigData`      | Data Asset        | `Content/Blueprints/` |
+| `HowToPlay_TBS`      | Widget Blueprint  | `Content/Blueprints/` |
+| `HUD_TBS`            | Widget Blueprint  | `Content/Blueprints/` |
+| `MainMenu_TBS`       | Widget Blueprint  | `Content/Blueprints/` |
+| `MapConfig_TBS`      | Widget Blueprint  | `Content/Blueprints/` |
 
 ### Fonts
 
@@ -135,22 +137,24 @@ Di seguito è fornita una descrizione dei file principali organizzata per catego
 
 ### Materiali
 
-| Materiale          | Descrizione                                                       |
-|--------------------|-------------------------------------------------------------------|
-| `M_Brawler_AI`     | Materiale per brawler AI                                          |
-| `M_Brawler_Human`  | Materiale per brawler HumanPlayer                                 |
-| `M_Floor`          | Materiale per sfondo livello                                      |
-| `M_Sniper_AI`      | Materiale per sniper AI                                           |
-| `M_Sniper_Human`   | Materiale per sniper HumanPlayer                                  |
-| `M_Tile`           | Materiale per la singola cella della griglia                      |
-| `M_Tower`          | Materiale per la torre                                            |
-| `M_TowerContested` | Materiale per la torre contesa, con i colori di entrambi i player |
+| Materiale          | Descrizione                                                       | Percorso				|
+|--------------------|-------------------------------------------------------------------|----------------------|
+| `M_AttackIcon`     | Materiale per icona target attacco                                | `Content/Materials/` |
+| `M_Brawler_AI`     | Materiale per brawler AI                                          | `Content/Materials/` |
+| `M_Brawler_Human`  | Materiale per brawler HumanPlayer                                 | `Content/Materials/` |
+| `M_Floor`          | Materiale per sfondo livello                                      | `Content/Materials/` |
+| `M_Sniper_AI`      | Materiale per sniper AI                                           | `Content/Materials/` |
+| `M_Sniper_Human`   | Materiale per sniper HumanPlayer                                  | `Content/Materials/` |
+| `M_Tile`           | Materiale per la singola cella della griglia                      | `Content/Materials/` |
+| `M_Tower`          | Materiale per la torre                                            | `Content/Materials/` |
+| `M_TowerContested` | Materiale per la torre contesa, con i colori di entrambi i player | `Content/Materials/` |
 
 ### Texture
 
 | Texture                 | Descrizione											  | Percorso               |
 |-------------------------|-------------------------------------------------------|------------------------|
 | `T_AiTowerCount`		  | Texture immagine per icona torre AI					  | `Content/Textures/`    |
+| `T_AttackIcon`		  | Texture per icona target attacco					  | `Content/Textures/`    |
 | `T_Brawler_AI`		  | Brawler robot per AI								  | `Content/Textures/`    |
 | `T_Brawler_Human`		  | Brawler umano per HumanPlayer						  | `Content/Textures/`    |
 | `T_Bullet`		      | Texture immagine per proiettile						  | `Content/Textures/`    |

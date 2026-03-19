@@ -136,9 +136,10 @@ void ARandomPlayer::OnWin()
 {
 	GameInstance->SetTurnMessage(TEXT("L'AI ha vinto la partita!"));
 	
-	// Nel caso di fine partita per RandomPlayer devo annullare tutti i timer attivi e disattivare il range movimento come fatto per HumanPlayer
+	// Nel caso di fine partita per RandomPlayer devo annullare tutti i timer attivi e disattivare il range movimento e icone di attacco come fatto per HumanPlayer
 	GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
 	HideMovementRange(GetWorld()->GetAuthGameMode<ATBS_GameMode>()->GField);
+	HideAttackIndicators(GetWorld()->GetAuthGameMode<ATBS_GameMode>()->GField);
 }
 
 void ARandomPlayer::OnLose()
@@ -147,6 +148,7 @@ void ARandomPlayer::OnLose()
 	
 	GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
 	HideMovementRange(GetWorld()->GetAuthGameMode<ATBS_GameMode>()->GField);
+	HideAttackIndicators(GetWorld()->GetAuthGameMode<ATBS_GameMode>()->GField);
 }
 
 void ARandomPlayer::PlaceUnitAutomatically()
@@ -935,7 +937,10 @@ void ARandomPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATBS_G
 	// Per ogni unità in AiUnits mostro il suo range di movimento
 	AUnit* Unit = Units[CurrentIndex];
 	UE_LOG(LogTemp, Log, TEXT("RandomPlayer: Considero unità %s"), *Unit->GetName());
+	// Mostro range movimento
 	ShowMovementRange(Unit, GM->GField);
+	// Mostro icone di attacco
+	ShowAttackIndicators(Unit, GM->GField);
 
 	// Timer 1 secondo e poi faccio eseguire azione all'AI
 	FTimerHandle ActionTimer;
@@ -950,8 +955,11 @@ void ARandomPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATBS_G
 			{
 				UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: Nessun target per %s"), *Unit->GetName());
 
-				// Nascondi range e passa alla prossima unità
+				// Nascondo range movimento
 				HideMovementRange(GM->GField);
+				// Nascondo icone di attacco
+				HideAttackIndicators(GM->GField);
+				// Passo alla prossima unità
 				ProcessUnit(Units, CurrentIndex + 1, GM);
 				return;
 			}
@@ -963,7 +971,11 @@ void ARandomPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATBS_G
 			{
 				UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: Nessuna mossa valida per %s"), *Unit->GetName());
 
+				// Nascondo range movimento
 				HideMovementRange(GM->GField);
+				// Nascondo icone di attacco
+				HideAttackIndicators(GM->GField);
+				// Passo alla prossima unità
 				ProcessUnit(Units, CurrentIndex + 1, GM);
 				return;
 			}
@@ -981,6 +993,9 @@ void ARandomPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATBS_G
 					FVector2D OldPos = Unit->GetCurrentGridPosition();
 
 					Unit->MoveTo(NextMove.X, NextMove.Y, GM->GField);
+
+					// Mostro icone di attacco dopo movimento
+					ShowAttackIndicators(Unit, GM->GField);
 
 					// Registro la mossa nello storico
 					if (GameInstance)
@@ -1051,8 +1066,70 @@ void ARandomPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATBS_G
 					// Se la partita è finita o non c'è il gamemode return
 					if (!GM || GM->bGameEnded) return;
 					HideMovementRange(GM->GField);
+					HideAttackIndicators(GM->GField);
 					ProcessUnit(Units, CurrentIndex + 1, GM);
 				}, 1.0f, false);
 
 		}, 1.0f, false);
+}
+
+void ARandomPlayer::ShowAttackIndicators(AUnit* Unit, AGameField* GameField)
+{
+	if (!Unit || !GameField) return;
+
+	// Nascondo le icone di attacco precedenti
+	HideAttackIndicators(GameField);
+
+	UE_LOG(LogTemp, Log, TEXT("RandomPlayer: Mostro icone attacco"));
+
+	// Trovo le unità nemiche attaccabili e mostro l'icona sopra di loro
+	for (TActorIterator<AUnit> It(GetWorld()); It; ++It)
+	{
+		AUnit* Enemy = *It;
+		// Se l'unità è nemica ed è viva allora controllo se può essere attaccata dall'unità selezionata da RandomPlayer
+		if (Enemy && Enemy->OwnerPlayerID != PlayerID && Enemy->IsAlive())
+		{
+			// Se l'unità selezionata può attaccare Enemy allora mostro l'icona
+			if (Unit->CanAttack(Enemy, GameField))
+			{
+				// Spawno icona attacco sopra il target nemico
+				if (AttackIndicatorClass)
+				{
+					FVector SpawnLoc = Enemy->GetActorLocation();
+
+					AAttackIndicator* Indicator = GetWorld()->SpawnActor<AAttackIndicator>(
+						AttackIndicatorClass,
+						SpawnLoc,
+						FRotator::ZeroRotator
+					);
+
+					if (Indicator)
+					{
+						Indicator->SetTargetUnit(Enemy);
+						AttackIndicators.Add(Indicator);
+
+						UE_LOG(LogTemp, Log, TEXT("RandomPlayer: Icona attacco su %s"), *Enemy->GetName());
+					}
+				}
+			}
+		}
+	}
+}
+
+void ARandomPlayer::HideAttackIndicators(AGameField* GameField)
+{
+	if (AttackIndicators.Num() == 0) return;
+
+	UE_LOG(LogTemp, Log, TEXT("HumanPlayer: Nascondo icone attacco che erano sui target"));
+
+	// Distruggo tutte le icone nell'array
+	for (AAttackIndicator* Indicator : AttackIndicators)
+	{
+		if (Indicator && IsValid(Indicator))
+		{
+			Indicator->Destroy();
+		}
+	}
+	// Svuoto l'array per prossime icone attacco da aggiungere
+	AttackIndicators.Empty();
 }

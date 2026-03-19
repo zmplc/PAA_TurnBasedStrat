@@ -9,6 +9,7 @@
 #include "Tile.h"
 #include "TBS_GameInstance.h"
 #include "TBS_PlayerController.h"
+#include "AttackIndicator.h"
 #include "EngineUtils.h"
 #include "Camera/CameraComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -61,7 +62,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Unit")
 	bool bHasPlacedBrawler;
 
-	// Tipo di unità da spawnare, se NONE non c'è nessuna unità selezionata
+	// Tipo di unità da spawnare, se NON non c'è nessuna unità selezionata
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Unit")
 	EUnitType PendingUnitTypeToSpawn;
 
@@ -76,6 +77,14 @@ protected:
 	// Se la prima unità selezionata ha effettuato azioni
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Turn")
 	bool bFirstUnitHasActed;
+
+	// Array per tenere traccia delle icone di attacco attive sui target (per poi rimuoverle)
+	UPROPERTY()
+	TArray<class AAttackIndicator*> AttackIndicators;
+
+	// Classe dell'icona di attacco da assegnare nel Blueprint
+	UPROPERTY(EditDefaultsOnly, Category = "Unit")
+	TSubclassOf<class AAttackIndicator> AttackIndicatorClass;
 
 public:	
 	// Called every frame
@@ -123,4 +132,12 @@ public:
 	// Funzione per vedere se mostrare il bottone termina turno senza attaccare
 	UFUNCTION(BlueprintCallable)
 	bool ShowEndTurnButton() const;
+
+	// Funzione per mostrare icone di attacco sui target
+	UFUNCTION()
+	void ShowAttackIndicators(AUnit* Unit);
+
+	// Funzione per nascondere icone di attacco sui target
+	UFUNCTION()
+	void HideAttackIndicators();
 };

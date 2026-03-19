@@ -131,6 +131,7 @@ void AHeuristicPlayer::OnWin()
 
 	GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
 	HideMovementRange(GetWorld()->GetAuthGameMode<ATBS_GameMode>()->GField);
+	HideAttackIndicators(GetWorld()->GetAuthGameMode<ATBS_GameMode>()->GField);
 }
 
 void AHeuristicPlayer::OnLose()
@@ -139,6 +140,7 @@ void AHeuristicPlayer::OnLose()
 
 	GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
 	HideMovementRange(GetWorld()->GetAuthGameMode<ATBS_GameMode>()->GField);
+	HideAttackIndicators(GetWorld()->GetAuthGameMode<ATBS_GameMode>()->GField);
 }
 
 void AHeuristicPlayer::PlaceUnitAutomatically()
@@ -925,7 +927,10 @@ void AHeuristicPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATB
 	// Per ogni unità in AiUnits mostro il suo range di movimento
 	AUnit* Unit = Units[CurrentIndex];
 	UE_LOG(LogTemp, Log, TEXT("HeuristicPlayer: Considero unità %s"), *Unit->GetName());
+	// Mostro range movimento
 	ShowMovementRange(Unit, GM->GField);
+	// Mostro icone di attacco
+	ShowAttackIndicators(Unit, GM->GField);
 
 	// Timer 1 secondo e poi faccio eseguire azione all'AI
 	FTimerHandle ActionTimer;
@@ -940,8 +945,11 @@ void AHeuristicPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATB
 			{
 				UE_LOG(LogTemp, Warning, TEXT("HeuristicPlayer: Nessun target per %s"), *Unit->GetName());
 
-				// Nascondi range e passa alla prossima unità
+				// Nascondo range movimento
 				HideMovementRange(GM->GField);
+				// Nascondo icone di attacco
+				HideAttackIndicators(GM->GField);
+				// Passo alla prossima unità
 				ProcessUnit(Units, CurrentIndex + 1, GM);
 				return;
 			}
@@ -953,7 +961,11 @@ void AHeuristicPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATB
 			{
 				UE_LOG(LogTemp, Warning, TEXT("HeuristicPlayer: Nessuna mossa valida per %s"), *Unit->GetName());
 
+				// Nascondo range movimento
 				HideMovementRange(GM->GField);
+				// Nascondo icone di attacco
+				HideAttackIndicators(GM->GField);
+				// Passo alla prossima unità
 				ProcessUnit(Units, CurrentIndex + 1, GM);
 				return;
 			}
@@ -971,6 +983,9 @@ void AHeuristicPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATB
 					FVector2D OldPos = Unit->GetCurrentGridPosition();
 
 					Unit->MoveTo(NextMove.X, NextMove.Y, GM->GField);
+
+					// Mostro icone di attacco dopo movimento
+					ShowAttackIndicators(Unit, GM->GField);
 
 					// Registro la mossa nello storico
 					if (GameInstance)
@@ -1041,9 +1056,70 @@ void AHeuristicPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATB
 					// Se la partita è finita o non c'è il gamemode return
 					if (!GM || GM->bGameEnded) return;
 					HideMovementRange(GM->GField);
+					HideAttackIndicators(GM->GField);
 					ProcessUnit(Units, CurrentIndex + 1, GM);
 				}, 1.0f, false);
 
 		}, 1.0f, false);
 }
 
+void AHeuristicPlayer::ShowAttackIndicators(AUnit* Unit, AGameField* GameField)
+{
+	if (!Unit || !GameField) return;
+
+	// Nascondo le icone di attacco precedenti
+	HideAttackIndicators(GameField);
+
+	UE_LOG(LogTemp, Log, TEXT("HeuristicPlayer: Mostro icone attacco"));
+
+	// Trovo le unità nemiche attaccabili e mostro l'icona sopra di loro
+	for (TActorIterator<AUnit> It(GetWorld()); It; ++It)
+	{
+		AUnit* Enemy = *It;
+		// Se l'unità è nemica ed è viva allora controllo se può essere attaccata dall'unità selezionata da RandomPlayer
+		if (Enemy && Enemy->OwnerPlayerID != PlayerID && Enemy->IsAlive())
+		{
+			// Se l'unità selezionata può attaccare Enemy allora mostro l'icona
+			if (Unit->CanAttack(Enemy, GameField))
+			{
+				// Spawno icona attacco sopra il target nemico
+				if (AttackIndicatorClass)
+				{
+					FVector SpawnLoc = Enemy->GetActorLocation();
+
+					AAttackIndicator* Indicator = GetWorld()->SpawnActor<AAttackIndicator>(
+						AttackIndicatorClass,
+						SpawnLoc,
+						FRotator::ZeroRotator
+					);
+
+					if (Indicator)
+					{
+						Indicator->SetTargetUnit(Enemy);
+						AttackIndicators.Add(Indicator);
+
+						UE_LOG(LogTemp, Log, TEXT("HeuristicPlayer: Icona attacco su %s"), *Enemy->GetName());
+					}
+				}
+			}
+		}
+	}
+}
+
+void AHeuristicPlayer::HideAttackIndicators(AGameField* GameField)
+{
+	if (AttackIndicators.Num() == 0) return;
+
+	UE_LOG(LogTemp, Log, TEXT("HeuristicPlayer: Nascondo icone attacco che erano sui target"));
+
+	// Distruggo tutte le icone nell'array
+	for (AAttackIndicator* Indicator : AttackIndicators)
+	{
+		if (Indicator && IsValid(Indicator))
+		{
+			Indicator->Destroy();
+		}
+	}
+	// Svuoto l'array per prossime icone attacco da aggiungere
+	AttackIndicators.Empty();
+}
