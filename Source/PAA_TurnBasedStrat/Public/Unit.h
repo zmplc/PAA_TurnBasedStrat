@@ -139,6 +139,14 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	class UStaticMeshComponent* UnitMesh;
 
+	// Suono attacco
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Unit Audio")
+	class USoundBase* AttackSound;
+
+	// Suono morte
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Unit Audio")
+	class USoundBase* DeathSound;
+
 	// Metodi per movimento
 	UFUNCTION(BlueprintCallable, Category = "Unit Movement")
 	virtual bool CanMoveTo(int32 TargetX, int32 TargetY, const class AGameField* GameField) const;

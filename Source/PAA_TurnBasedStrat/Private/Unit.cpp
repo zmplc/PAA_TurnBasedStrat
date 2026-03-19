@@ -6,6 +6,7 @@
 #include "TBS_GameMode.h"
 #include "TBS_GameInstance.h"
 #include "EngineUtils.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 AUnit::AUnit()
@@ -495,6 +496,12 @@ void AUnit::ApplyDamage(int32 DamageAmount, AUnit* Attacker, const AGameField* G
 {
 	if (DamageAmount <= 0) return;
 
+	// Riproduco AttackSound assegnato nel blueprint dell'unità che attacca, se assegnato
+	if (Attacker && Attacker->AttackSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, Attacker->AttackSound, Attacker->GetActorLocation());
+	}
+
 	// Sottraggo danno inflito dalla vita corrente e faccio in modo che non scenda sotto 0
 	CurrentHealth -= DamageAmount;
 	CurrentHealth = FMath::Max(0, CurrentHealth);
@@ -515,6 +522,12 @@ void AUnit::ApplyDamage(int32 DamageAmount, AUnit* Attacker, const AGameField* G
 	// Controllo se l'unità è morta
 	if (CurrentHealth <= 0)
 	{
+		// Riproduco DeathSound assegnato nel blueprint dell'unità uccisa, se assegnato
+		if (DeathSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, DeathSound, GetActorLocation());
+		}
+
 		// Unità distrutta, imposto vita a 0
 		CurrentHealth = 0;
 
