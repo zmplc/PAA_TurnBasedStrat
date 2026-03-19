@@ -100,9 +100,17 @@ Di seguito è fornita una descrizione dei file principali organizzata per catego
 
 ### Audio
 
-| File			| Descrizione				   | Percorso		   |
-|---------------|------------------------------|-------------------|
-| `ClickButton` | Suono di click per i bottoni | `Content/Audios/` |
+Per quanto riguarda l'audio, nel progetto ho utilizzato Sound Cue per gestire gli effetti sonori. In particolare per gli effetti sonori degli attacchi e delle morti delle unità, ho applicato un modulatore (impostando un pitch minimo di 0.9 e un pitch massimo di 1.1) in modo da evitare che i suoni risultino ripetitivi.
+
+| File			       | Tipo	   | Descrizione													       | Percorso		   |
+|----------------------|-----------|-----------------------------------------------------------------------|-------------------|
+| `ClickButton_Cue`    | Sound Cue | Effetto sonoro per click dei bottoni								   | `Content/Audios/` |
+| `Gun_Shot_Cue`       | Sound Cue | Effetto sonoro dello sparo per l'unità _Human Sniper_				   | `Content/Audios/` |
+| `Human_Death_Cue`    | Sound Cue | Effetto sonoro riprodotto alla morte delle unità di _HumanPlayer_	   | `Content/Audios/` |
+| `Human_Melee_Cue`    | Sound Cue | Effetto sonoro dell'attacco corpo a corpo per l'unità _Human Brawler_ | `Content/Audios/` |
+| `Robot_Death_Cue`	   | Sound Cue | Effetto sonoro riprodotto alla morte delle unità dell'AI			   | `Content/Audios/` |
+| `Robot_Gun_Shot_Cue` | Sound Cue | Effetto sonoro dello sparo per l'unità _AI Sniper_					   | `Content/Audios/` |
+| `Robot_Melee_Cue`    | Sound Cue | Effetto sonoro dell'attacco corpo a corpo per l'unità _AI Brawler_    | `Content/Audios/` |
 
 ### Blueprint
 
