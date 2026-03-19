@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Components/BillboardComponent.h"
 #include "AttackIndicator.generated.h"
 
 UCLASS()
