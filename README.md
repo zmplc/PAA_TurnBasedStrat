@@ -3,7 +3,7 @@
 
 Questo progetto consiste nell'implementazione in Unreal Engine 5.6 di un gioco strategico a turni 3D, il progetto è sviluppato in C++ con integrazione di Blueprint.
 
-### Requisiti implementati
+## Requisiti implementati
 
 * [x] Il progetto compila correttamente, il codice è ben commentato e ben strutturato (polimorfismo ed ereditarietà).
 * [x] Griglia di gioco iniziale graficamente corretta e interamente visibile nello schermo.
