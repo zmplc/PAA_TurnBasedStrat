@@ -24,6 +24,8 @@ Questo progetto consiste nell'implementazione in Unreal Engine 5.6 di un gioco s
 - Le barre della vità delle unità sono sempre visibili a schermo. In base ai punti vita delle unità le barre cambiano colore e dimensione: verde, giallo e rosso.
 - Nella schermata di configurazione della mappa, l'utente può scegliere i parametri dei 5 livelli della mappa (acqua, terreno, collina e montagne).
 
+## Osservazioni e ulteriori specifiche
+
 ### HeuristicPlayer
 
 **HeuristicPlayer** è la classe che implementa un'AI basata su algoritmi euristici ottimizzati di movimento. Invece di utilizzare l'algoritmo A* (usato invece in RandomPlayer), HeuristicPlayer valuta le mosse possibili in base a funzioni euristiche che tengono conto di diversi fattori:
@@ -49,6 +51,21 @@ Il sistema calcola la posizione dell'unità in ogni frame, interpolando tra la p
 - **Pathfinding**: l'unità deve seguire un percorso di tile, quindi il sistema gestisce una coda di posizioni di destinazione (le celle del percorso per arrivare alla target tile). Una volta raggiunto `Alpha >= 1.0f` per la cella corrente, viene impostata la destinazione precedente come nuova partenza e l'indice dell'array `[CurrentPathIndex]` viene incrementato per passare alla cella successiva del percorso, finché l'intero array `MovementPath` non viene esaurito.
 
 **Osservazione**: dopo il controllo su `Alpha >= 1.0f` viene effettuata l'assegnazione esplicita dell'unità alla posizione target con `SetActorLocation(MovementTargetLocation);`, questo viene fatto per garantire che l'unità raggiunga esattamente la posizione target ed evitare bug nel posizionamento, siccome nel calcolo di `NewLocation` tramite `Lerp` potrebbero verificarsi errori di approssimazione nel calcolo dell'interpolazione.
+
+### Attack Indicator
+
+La classe `AttackIndicator` è un **Actor** che fornisce un feedback visivo al giocatore, evidenziando quali unità nemiche sono attualmente nel range di attacco dell'unità selezionata. L'actor è composto da una `USceneComponent` e una `UStaticMeshComponent` che visualizza l'icona. Questo aiuta il giocatore a prendere decisioni strategiche con più informazioni possibili. 
+
+#### Logica di funzionamento
+
+Attraverso la funzione `SetTargetUnit(AUnit* TargetUnit)`, l'icona viene vincolata ad una specifica unità nemica. Viene applicato un offset verticale costante `300.0f`, in modo che l'icona appaia sopra l'unità target. Tutte le collisioni sono disabilitate per quest attore, in modo che non interferisca con il gameplay e siccome è solo un feedback visivo.
+
+L'aspetto importante è la gestione del ciclo di vita dell'Attack Indicator tramite la funzione `Tick(float DeltaTime)`. Ad ogni frame, viene eseguito un controllo sull'unità target:
+
+1. **Esistenza dell'unità**: se l'unità target è stata distrutta (con `!IsValid(Target)`)
+2. **Stato dell'unità**: se l'unità target è ancora attiva nel gioco (con `!TargetUnit->IsAlive()`)
+
+Se l'unità target non è più valida o non è più viva, l'Attack Indicator chiama automaticamente `Destroy()`, rimuovendosi quindi dalla scena. Questo garantisce che l'indicatore non rimanga visibile quando l'unità target è stata eliminata, evitando di avere icone sopra unità non più presenti.
 
 ## Configurazione iniziale
 
