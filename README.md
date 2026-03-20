@@ -187,9 +187,9 @@ Per quanto riguarda l'audio, nel progetto ho utilizzato Sound Cue per gestire gl
 | `T_HumanTowerCount`	  | Texture immagine per icona torre Human				  | `Content/Textures/`    |
 | `T_Knife`		          | Texture immagine per arma corpo a corpo				  | `Content/Textures/`    |
 | `T_MainBackground`      | Texture immagine per le schermate widget HUD		  | `Content/Textures/`    |
+| `T_MainMenu`			  | Texture immagine per la schermata iniziale del menù	  | `Content/Textures/`    |
 | `T_Sniper_AI`			  | Sniper robot per AI									  | `Content/Textures/`    |
 | `T_Sniper_Human`        | Sniper umano per HumanPlayer						  | `Content/Textures/`    |
-| `T_VictoryBackground`   | Texture immagine per schermata vittoria				  | `Content/Textures/`    |
 | `BlueButton`		      | Texture per stato Normal per bottone blu			  | `Content/Textures/UI/` |
 | `BlueHoveredButton`	  | Texture per stato Hovered per bottone blu			  | `Content/Textures/UI/` |
 | `BluePressedButton`	  | Texture per stato Pressed per bottone blu			  | `Content/Textures/UI/` |
