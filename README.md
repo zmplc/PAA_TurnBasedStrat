@@ -77,9 +77,9 @@ Seguire i seguenti passaggi per configurare l'ambiente di sviluppo e compilare i
 
 ## Interfaccia utente
 
-| Main Menu								 |
-| :------------------------------------- |
-| ![Menù principale](docs/main_menu.png) |
+| Main Menu								 | How To Play							 |
+| :------------------------------------- | :-------------------------------------|
+| ![Menù principale](docs/main_menu.png) | ![Come giocare](docs/main_menu.png) |
 
 ## Descrizione dei file principali
 Di seguito è fornita una descrizione dei file principali organizzata per categoria, con dettagli aggiuntivi sui file più rilevanti.
