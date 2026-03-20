@@ -3,6 +3,8 @@
 
 Questo progetto consiste nell'implementazione in Unreal Engine 5.6 di un gioco strategico a turni 3D, il progetto è sviluppato in C++ con integrazione di Blueprint.
 
+![Menù principale](docs/main_menu.png)
+
 ## Requisiti implementati
 
 * [x] Il progetto compila correttamente, il codice è ben commentato e ben strutturato (polimorfismo ed ereditarietà).
@@ -74,12 +76,6 @@ Seguire i seguenti passaggi per configurare l'ambiente di sviluppo e compilare i
 1. **Generazione della soluzione Visual Studio**: il progetto non include il file `.sln`. Per crearlo è sufficiente individuare il file `.uproject` nella cartella principale del progetto, cliccare con il tasto destro e selezionare "Generate Visual Studio project files".
 2. **Starter Content**: il progetto utilizza asset provenienti dallo "Starter Content" di Unreal Engine. Per importare questi asset, aprire il progetto in Unreal Engine, andare nella sezione "Content Browser", cliccare sul pulsante "Add" e selezionare "Add Feature or Content Pack". Nella finestra che si apre, selezionare la tab "Content" e scegliere "Starter Content", cliccare poi su "Add to Project".
 3. **Prima compilazione**: dopo aver generato la soluzione Visual Studio, aprire il file `.sln`, selezionare la configurazione "Development Editor" e compilare il progetto.
-
-## Interfaccia utente
-
-| Main Menu								 | How To Play							 |
-| :------------------------------------- | :-------------------------------------|
-| ![Menù principale](docs/main_menu.png) | ![Come giocare](docs/main_menu.png) |
 
 ## Descrizione dei file principali
 Di seguito è fornita una descrizione dei file principali organizzata per categoria, con dettagli aggiuntivi sui file più rilevanti.
