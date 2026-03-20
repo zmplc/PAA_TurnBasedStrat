@@ -1079,6 +1079,43 @@ void ARandomPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATBS_G
 
 				GameInstance->SetTurnMessage(FString::Printf(TEXT("AI: %s attacca!"), *Unit->GetName()));
 			}
+			else if (NextMove == CurrentIntPos)
+			{
+				// Se sono già sul target, ovvero la torre, se non ci sono nemici vicini l'AI starebbe ferma, allora calcolo il nemico più vicino e faccio muovere l'AI verso di lui
+				UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: %s sul target ma nessun nemico in range, muovo verso nemico vicino"), *Unit->GetName());
+
+				// Calcolo il nemico più vicino chiamando FindClosestEnemy
+				AUnit* ClosestEnemy = FindClosestEnemy();
+				if (ClosestEnemy)
+				{
+					FVector2D EnemyPos = ClosestEnemy->GetCurrentGridPosition();
+					FIntPoint EnemyTarget(FMath::RoundToInt(EnemyPos.X), FMath::RoundToInt(EnemyPos.Y));
+					// Definisco FallbackMove che rappresenta la prossima mossa per arrivare al nemico più vicino usando NextMoveTowardsTarget
+					FIntPoint FallbackMove = NextMoveTowardsTarget(Unit, EnemyTarget, GM->GField);
+					// Check per FallbackMove: deve essere diverso dalla posizione corrente dell'unità e deve essere nel range di movimento dell'unità
+					if (FallbackMove != CurrentIntPos && Unit->CanMoveTo(FallbackMove.X, FallbackMove.Y, GM->GField))
+					{
+						// Muovo l'unità
+						FVector2D OldPos = Unit->GetCurrentGridPosition();
+						Unit->MoveTo(FallbackMove.X, FallbackMove.Y, GM->GField);
+
+						// Registro la mossa nello storico
+						if (GameInstance)
+						{
+							FString MoveHistoryPlayerID = TEXT("AI");
+							FString MoveHistoryUnitType = (Unit->UnitType == EUnitType::SNIPER) ? TEXT("S") : TEXT("B");
+							FString MoveHistoryFromPos = AUnit::GridPositionConverter(FMath::RoundToInt(OldPos.X), FMath::RoundToInt(OldPos.Y));
+							FString MoveHistoryToPos = AUnit::GridPositionConverter(FallbackMove.X, FallbackMove.Y);
+							// Faccio il setup della stringa da passare poi allo storico delle mosse
+							FString MoveEntry = FString::Printf(TEXT("%s: %s %s -> %s"), *MoveHistoryPlayerID, *MoveHistoryUnitType, *MoveHistoryFromPos, *MoveHistoryToPos);
+							// Aggiungo la AttackEntry nell'array
+							GameInstance->AddMoveToHistory(MoveEntry);
+						}
+
+						GameInstance->SetTurnMessage(FString::Printf(TEXT("AI: %s si muove"), *Unit->GetName()));
+					}
+				}
+			}
 
 			// Aspetto 1 secondo e poi passo alla seconda unità
 			FTimerHandle NextUnitTimer;
