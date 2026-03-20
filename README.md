@@ -75,6 +75,12 @@ Seguire i seguenti passaggi per configurare l'ambiente di sviluppo e compilare i
 2. **Starter Content**: il progetto utilizza asset provenienti dallo "Starter Content" di Unreal Engine. Per importare questi asset, aprire il progetto in Unreal Engine, andare nella sezione "Content Browser", cliccare sul pulsante "Add" e selezionare "Add Feature or Content Pack". Nella finestra che si apre, selezionare la tab "Content" e scegliere "Starter Content", cliccare poi su "Add to Project".
 3. **Prima compilazione**: dopo aver generato la soluzione Visual Studio, aprire il file `.sln`, selezionare la configurazione "Development Editor" e compilare il progetto.
 
+## Interfaccia utente
+
+| Main Menu								 |
+| :------------------------------------- |
+| ![Menù principale](docs/main_menu.png) |
+
 ## Descrizione dei file principali
 Di seguito è fornita una descrizione dei file principali organizzata per categoria, con dettagli aggiuntivi sui file più rilevanti.
 
