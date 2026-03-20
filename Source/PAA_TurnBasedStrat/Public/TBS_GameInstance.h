@@ -19,6 +19,8 @@ struct FMoveHistoryEntry
 	FMoveHistoryEntry(const FString& Text) : MoveText(Text) {}
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMoveAddedSignature);
+
 UCLASS()
 class PAA_TURNBASEDSTRAT_API UTBS_GameInstance : public UGameInstance
 {
@@ -60,6 +62,10 @@ public:
 	// Storico mosse (metto TArray di struct con la singola entry)
 	UPROPERTY(BlueprintReadOnly, Category = "Move History")
 	TArray<FMoveHistoryEntry> MoveHistory;
+
+
+	UPROPERTY(BlueprintAssignable, Category = "Move History")
+	FOnMoveAddedSignature OnMoveAdded;
 
 	// AIPlayer selezionata dal giocatore nel MainMenu (0=RandomPlayer, 1=HeuristicPlayer)
 	UPROPERTY(BlueprintReadWrite, Category = "AI")

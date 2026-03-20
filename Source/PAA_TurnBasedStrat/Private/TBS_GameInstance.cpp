@@ -92,6 +92,8 @@ void UTBS_GameInstance::AddMoveToHistory(const FString& MoveText)
 	FMoveHistoryEntry Entry(MoveText);
 	// Aggiungo l'entry creata
 	MoveHistory.Add(Entry);
+	// Notifico il widget che è stata aggiunta una mossa allo storico
+	OnMoveAdded.Broadcast();
 }
 
 TArray<FString> UTBS_GameInstance::GetMoveHistory() const
