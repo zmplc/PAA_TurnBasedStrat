@@ -187,7 +187,6 @@ Per quanto riguarda l'audio, nel progetto ho utilizzato Sound Cue per gestire gl
 | `T_HumanTowerCount`	  | Texture immagine per icona torre Human				  | `Content/Textures/`    |
 | `T_Knife`		          | Texture immagine per arma corpo a corpo				  | `Content/Textures/`    |
 | `T_MainBackground`      | Texture immagine per le schermate widget HUD		  | `Content/Textures/`    |
-| `T_MainMenu`			  | Texture immagine per la schermata iniziale del menù	  | `Content/Textures/`    |
 | `T_Sniper_AI`			  | Sniper robot per AI									  | `Content/Textures/`    |
 | `T_Sniper_Human`        | Sniper umano per HumanPlayer						  | `Content/Textures/`    |
 | `BlueButton`		      | Texture per stato Normal per bottone blu			  | `Content/Textures/UI/` |
@@ -196,6 +195,7 @@ Per quanto riguarda l'audio, nel progetto ho utilizzato Sound Cue per gestire gl
 | `GreenButton`		      | Texture per stato Normal per bottone verde			  | `Content/Textures/UI/` |
 | `GreenHoveredButton`	  | Texture per stato Hovered per bottone verde			  | `Content/Textures/UI/` |
 | `GreenPressedButton`	  | Texture per stato Pressed per bottone verde			  | `Content/Textures/UI/` |
+| `MenuBackground`		  | Texture immagine per la schermata iniziale del menù	  | `Content/Textures/UI`  |
 | `RedButton`		      | Texture per stato Normal per bottone rosso			  | `Content/Textures/UI/` |
 | `RedHoveredButton`	  | Texture per stato Hovered per bottone rosso			  | `Content/Textures/UI/` |
 | `RedPressedButton`	  | Texture per stato Pressed per bottone rosso			  | `Content/Textures/UI/` |
