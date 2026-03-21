@@ -25,6 +25,9 @@ Questo progetto consiste nell'implementazione in Unreal Engine 5.6 di un gioco s
 - L'AI attacca il nemico con meno HP tra quelli nel range di attacco, invece del più vicino. In questo modo l'AI si concentra sulle unità più deboli, cercando di eliminarle rapidamente per ridurre il numero di unità di HumanPlayer nella mappa.
 - Le barre della vità delle unità sono sempre visibili a schermo. In base ai punti vita delle unità le barre cambiano colore e dimensione: verde, giallo e rosso.
 - Nella schermata di configurazione della mappa, l'utente può scegliere i parametri dei 5 livelli della mappa (acqua, terreno, collina e montagne).
+- Quando viene selezionata un'unità, le unità nemiche che sono nel suo range di attacco vengono evidenziate con un'icona sopra di esse, in modo da fornire al giocatore un feedback visivo sulle possibili mosse da effettuare.
+
+![Demo del Gameplay](docs/gameplay_demo.gif)
 
 ## Osservazioni e ulteriori specifiche
 
