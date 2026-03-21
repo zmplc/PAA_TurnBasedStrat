@@ -375,12 +375,12 @@ ATile* AGameField::FindFirstWalkableTile() const
 
 void AGameField::MakeSpawnZonesConnected()
 {
-	// Zona HumanPlayer (Y = 0, 1, 2)
-	// Cerca verso il basso (direzione +1)
+	// La zona di piazzamento iniziale per HumanPlayer è Y=0,1,2
+	// Passo SearchDirection +1 per salire di Y (quindi verso centro della mappa)
 	CreateBridgeFromSpawnZone(0, 2, 1);
 
-	// Zona AI (Y = 22, 23, 24)
-	// Cerca verso l'alto (direzione -1)
+	// La zona di piazzamento iniziale per AI è Y=22,23,24
+	// Passo SearchDirection -1 per scendere di Y (quindi verso centro della mappa)
 	CreateBridgeFromSpawnZone(22, 24, -1);
 }
 

@@ -26,6 +26,7 @@ Questo progetto consiste nell'implementazione in Unreal Engine 5.6 di un gioco s
 - Le barre della vità delle unità sono sempre visibili a schermo. In base ai punti vita delle unità le barre cambiano colore e dimensione: verde, giallo e rosso.
 - Nella schermata di configurazione della mappa, l'utente può scegliere i parametri dei 5 livelli della mappa (acqua, terreno, collina e montagne).
 - Quando viene selezionata un'unità, le unità nemiche che sono nel suo range di attacco vengono evidenziate con un'icona sopra di esse, in modo da fornire al giocatore un feedback visivo sulle possibili mosse da effettuare.
+- Per garantire zone di piazzamento iniziale sempre accessibili, specialmente nel caso in cui si scelga di generare una mappa con molte celle di livello 0 (acqua), se le celle di piazzamento iniziale risultano essere acqua, viene creato un collegamento di celle di livello 1 che connettono le zone di piazzamento iniziale alla prima cella camminabile più vicina.
 
 ![Demo del Gameplay](docs/gameplay_demo.gif)
 
@@ -71,6 +72,20 @@ L'aspetto importante è la gestione del ciclo di vita dell'Attack Indicator tram
 2. **Stato dell'unità**: se l'unità target è ancora attiva nel gioco (con `!TargetUnit->IsAlive()`)
 
 Se l'unità target non è più valida o non è più viva, l'Attack Indicator chiama automaticamente `Destroy()`, rimuovendosi quindi dalla scena. Questo garantisce che l'indicatore non rimanga visibile quando l'unità target è stata eliminata, evitando di avere icone sopra unità non più presenti.
+
+### Collegamento automatico delle zone di piazzamento iniziale
+
+Per evitare che vengano generate zone di piazzamento con solo acqua, rendendo quindi impossibile posizionare le unità, è stato implementato un sistema per creare un collegamento automatico (ponte a L) tra le zone di piazzamento e la prima cella camminabile più vicina (nonostante sia un problema che si verifica in rarissimi casi). In questo modo, è sempre possibile posizionare le unità.
+
+#### Logica di funzionamento
+
+Se nelle righe della griglia dedicate al piazzamento iniziale (`Y=0,1,2` per HumanPlayer e `Y=22,23,24` per AI) viene creato il collegamento se non ci sono almeno 2 celle camminabili dove piazzare le unità. Se ci sono almeno 2 tile camminabili siu può non generare alcun collegamento siccome queste celle sono sicuramente collegate al resto della mappa, grazue alla funzione `IsMapFullyConnected()`.
+
+1. **Controllo della zona di piazzamento**: nella funzione `CreateBridgeFromSpawnZone` vengono contate le celle camminabili presenti nella zona di piazzamento iniziale. Se `WalkableCount >= 2` allora viene considerata come una zona di piazzamento valida e viene effettuato un `return;`. Altrimenti la funzione continua con la creazione del collegamento.
+2. **Ricerca della cella camminabile più vicina**: tramite `NearestWalkableTileOutsideZone` viene trovata la cella camminabile più vicina alla zona di piazzamento, utilizzando una ricerca a spirale partendo dal centro della zona di piazzamento. Algoritmo di ricerca già implementato nel progetto.
+3. **Creazione del collegamento**: dopo aver trovato la cella camminabile più vicina, viene creato un collegamento _ponte a L_ dal centro della zona di piazzamento fino alla cella trovata, prima in linea verticale e poi in linea orizzontale, modificando il livello di tutte le celle a `1` (ovvero terreno).
+
+Questo controllo viene chiamato in `GenerateGrid()` prima del posizionamento delle torri, attraverso la funzione `MakeSpawnZonesConnected`.
 
 ## Configurazione iniziale
 
