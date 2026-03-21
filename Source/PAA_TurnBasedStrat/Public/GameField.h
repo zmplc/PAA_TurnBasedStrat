@@ -87,4 +87,13 @@ protected:
     bool IsMapFullyConnected() const;
     void FloodFill(int32 StartX, int32 StartY, TArray<bool>& Visited) const;
     ATile* FindFirstWalkableTile() const;
+
+    // Funzione chiamata per far si che la zona di piazzamento sia connessa al resto della mappa (voglio evitare di avere solo oceano nelle zone di piazzamento)
+    void MakeSpawnZonesConnected();
+
+    // Costruisco un "ponte" di tile camminabili tra zona di piazzamento e la prima tile camminabile della mappa
+    void CreateBridgeFromSpawnZone(int32 MinY, int32 MaxY, int32 SearchDirection);
+
+    // Trova la tile camminabile più vicina alla zona di piazzamento, con una direzione specifica (verso basso per AI e verso alto per Human)
+    FIntPoint NearestWalkableTileOutsideZone(int32 StartX, int32 StartY, int32 MinY, int32 MaxY) const;
 };

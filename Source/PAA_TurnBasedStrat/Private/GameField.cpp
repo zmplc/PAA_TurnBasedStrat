@@ -156,6 +156,7 @@ void AGameField::GenerateGrid()
 		// Dopo lo spawn delle tile controllo se la mappa è connessa ed è quindi senza isole irraggiungibili
 		if (IsMapFullyConnected())
 		{
+			MakeSpawnZonesConnected();
 			PlaceTowers();
 			UE_LOG(LogTemp, Log, TEXT("Mappa generata con successo - Torri: %d"), TowerArray.Num());
 			return;
@@ -370,6 +371,171 @@ ATile* AGameField::FindFirstWalkableTile() const
 		}
 	}
 	return nullptr;
+}
+
+void AGameField::MakeSpawnZonesConnected()
+{
+	// Zona HumanPlayer (Y = 0, 1, 2)
+	// Cerca verso il basso (direzione +1)
+	CreateBridgeFromSpawnZone(0, 2, 1);
+
+	// Zona AI (Y = 22, 23, 24)
+	// Cerca verso l'alto (direzione -1)
+	CreateBridgeFromSpawnZone(22, 24, -1);
+}
+
+void AGameField::CreateBridgeFromSpawnZone(int32 MinY, int32 MaxY, int32 SearchDirection)
+{
+	// Conto quante tile camminabili ci sono nelle zone di piazzamento e le salvo in un array
+	// Faccio questo perchhé se ci sono già almeno 2 tile camminabili (una per unità) faccio return perché non serve creare nessun collegamento
+	// Inoltre siccome ho già controllato che la mappa sia completamente connessa se ci sono 2 tile camminabili queste sono già connese al resto della mappa
+	int32 WalkableCount = 0;
+	TArray<FIntPoint> WalkableTiles;
+
+	for (int32 Y = MinY; Y <= MaxY; Y++)
+	{
+		for (int32 X = 0; X < GridSizeX; X++)
+		{
+			ATile* Tile = GetTileAtPosition(X, Y);
+			if (Tile && Tile->IsWalkable())
+			{
+				WalkableCount++;
+				WalkableTiles.Add(FIntPoint(X, Y));
+			}
+		}
+	}
+
+	// Se ci sono almeno 2 tile camminabili faccio return
+	if (WalkableCount >= 2)
+	{
+		UE_LOG(LogTemp, Log, TEXT("GameField: Zona di piazzamento Y=%d-%d OK"),	MinY, MaxY);
+		return;
+	}
+
+	// Altrimenti devo iniziare a creare il collegamento che sarà un "ponte" di tile camminabili che vengono piazzate
+	int32 SpawnX;
+	int32 SpawnY;
+
+	if (WalkableCount > 0)
+	{
+		// Se c'è già una tile camminabile nella zona di piazzamento uso quella
+		SpawnX = WalkableTiles[0].X;
+		SpawnY = WalkableTiles[0].Y;
+	}
+	else
+	{
+		// Se non c'è nemmeno una tile la creo io in X=12 e Y=1 per Human e Y=22 per AI (le metto al centro della zona di piazzamento)
+		// Scrivo (MinY + MaxY) / 2 così si adatta alle MinY e MaxY che passo alla funzione
+		SpawnX = GridSizeX / 2;
+		SpawnY = (MinY + MaxY) / 2;
+
+		ATile* OldTile = GetTileAtPosition(SpawnX, SpawnY);
+		if (OldTile)
+		{
+			OldTile->Destroy();
+		}
+
+		SpawnTile(SpawnX, SpawnY, 1);
+	}
+
+	// Trovo ora la tile camminabile più vicina fuori dalla zona di piazzamento chiamando la funzione NearestWalkableTileOutsideZone
+	FIntPoint NearestOutside = NearestWalkableTileOutsideZone(SpawnX, SpawnY, MinY, MaxY);
+
+	if (NearestOutside.X == -1)
+	{
+		// Controllo per errori
+		UE_LOG(LogTemp, Error, TEXT("GameField: Errore nella ricerca della tile"));
+		return;
+	}
+
+	// Tile trovata
+	UE_LOG(LogTemp, Log, TEXT("GameField: Tile esterna trovata in (%d,%d)"), NearestOutside.X, NearestOutside.Y);
+
+	// Posso ora creare il collegamento
+	// Parto dalla tile di spawn e mi muovo prima in linea verticale verso la tile trovatra poi in linea orizzontale
+	// Così creo un "ponte" di tile camminabili che collega la zona di piazzamento alla tile camminabile trovata
+	int32 CurrentX = SpawnX;
+	int32 CurrentY = SpawnY;
+	int32 TilesCreated = 0;
+
+	// Movimento in linea verticale
+	int32 DirY = (NearestOutside.Y > CurrentY) ? 1 : -1;
+	while (CurrentY != NearestOutside.Y)
+	{
+		CurrentY += DirY;
+
+		ATile* Tile = GetTileAtPosition(CurrentX, CurrentY);
+		if (Tile)
+		{
+			// Se è acqua (livello 0) allora la imposto come tile camminabile (uso livello 1)
+			if (Tile->GetHeightLevel() == 0)
+			{
+				Tile->Destroy();
+				SpawnTile(CurrentX, CurrentY, 1);
+				TilesCreated++;
+				UE_LOG(LogTemp, Log, TEXT("GameField: Tile creata"));
+			}
+		}
+	}
+
+	// Movimento in linea orizzontale
+	int32 DirX = (NearestOutside.X > CurrentX) ? 1 : -1;
+	while (CurrentX != NearestOutside.X)
+	{
+		CurrentX += DirX;
+
+		ATile* Tile = GetTileAtPosition(CurrentX, CurrentY);
+		if (Tile)
+		{
+			// Se è acqua(livello 0) allora la imposto come tile camminabile(uso livello 1)
+			if (Tile->GetHeightLevel() == 0)
+			{
+				Tile->Destroy();
+				SpawnTile(CurrentX, CurrentY, 1);
+				TilesCreated++;
+				UE_LOG(LogTemp, Log, TEXT("GameField: Tile creata"));
+			}
+		}
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("GameField: Collegamento creato utilizzando %d tile"), TilesCreated);
+}
+
+FIntPoint AGameField::NearestWalkableTileOutsideZone(int32 StartX, int32 StartY, int32 MinY, int32 MaxY) const
+{
+	// Con stessa implementazione della ricerca a spirale di FindNearestWalkablePosition ma con condizione aggiuntiva che la tile deve essere fuori dalle Y di piazzamento
+	for (int32 Radius = 1; Radius <= 20; Radius++)
+	{
+		for (int32 dx = -Radius; dx <= Radius; dx++)
+		{
+			for (int32 dy = -Radius; dy <= Radius; dy++)
+			{
+				// Solo bordi del quadrato
+				if (FMath::Abs(dx) == Radius || FMath::Abs(dy) == Radius)
+				{
+					int32 X = StartX + dx;
+					int32 Y = StartY + dy;
+
+					if (X >= 0 && X < GridSizeX && Y >= 0 && Y < GridSizeY)
+					{
+						// FUORI dalla zona di piazzamento
+						if (Y < MinY || Y > MaxY)
+						{
+							ATile* Tile = GetTileAtPosition(X, Y);
+							if (Tile && Tile->IsWalkable())
+							{
+								UE_LOG(LogTemp, Log, TEXT("GameField: Tile camminabile trovata a (%d,%d), raggio: %d"), X, Y, Radius);
+								return FIntPoint(X, Y);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	UE_LOG(LogTemp, Error, TEXT("GameField: Nessuna tile camminabile trovata fuori dalla zona di piazzamento"));
+	return FIntPoint(-1, -1);
 }
 
 // Funzione per spawnare la tile in X,Y e con altezza HeightLevel
