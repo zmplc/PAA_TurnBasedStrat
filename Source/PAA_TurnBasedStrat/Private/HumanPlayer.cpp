@@ -645,7 +645,7 @@ void AHumanPlayer::SelectBrawlerForPlacement()
     ClassToSpawn = BrawlerClass;
     PendingUnitTypeToSpawn = EUnitType::BRAWLER;
     UE_LOG(LogTemp, Log, TEXT("HumanPlayer: Brawler selezionato"));
-    GameInstance->SetTurnMessage(TEXT("Brawler selezionato, clicca su tile (Y=0-2)"));
+    GameInstance->SetTurnMessage(TEXT("Brawler selezionato, clicca su tile (Y=0,1,2)"));
 }
 
 void AHumanPlayer::CheckAndEndTurnIfComplete()
