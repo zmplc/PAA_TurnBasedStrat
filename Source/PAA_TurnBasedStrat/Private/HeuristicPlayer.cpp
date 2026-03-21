@@ -708,7 +708,7 @@ FIntPoint AHeuristicPlayer::DecideTarget(AUnit* Unit, AGameField* GameField)
 		FVector2D TowerPos = BestTower->GetGridPosition();
 		FIntPoint TowerTarget = FindWalkableTileCaptureZone(TowerPos, GameField);
 
-		UE_LOG(LogTemp, Log, TEXT("HeuristicPlayer: %s priorità TORRE (Score: %.1f > %.1f)"), *Unit->GetName(), TowerScore, EnemyScore);
+		UE_LOG(LogTemp, Log, TEXT("HeuristicPlayer: %s priorità TORRE (Score: %.1f > %.1f)"), *Unit->GetDisplayName(), TowerScore, EnemyScore);
 
 		return TowerTarget;
 	}
@@ -716,12 +716,12 @@ FIntPoint AHeuristicPlayer::DecideTarget(AUnit* Unit, AGameField* GameField)
 	{
 		FVector2D EnemyPos = BestEnemy->GetCurrentGridPosition();
 
-		UE_LOG(LogTemp, Log, TEXT("HeuristicPlayer: %s priorità NEMICO (Score: %.1f > %.1f)"), *Unit->GetName(), EnemyScore, TowerScore);
+		UE_LOG(LogTemp, Log, TEXT("HeuristicPlayer: %s priorità NEMICO (Score: %.1f > %.1f)"), *Unit->GetDisplayName(), EnemyScore, TowerScore);
 
 		return FIntPoint(FMath::RoundToInt(EnemyPos.X), FMath::RoundToInt(EnemyPos.Y));
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("HeuristicPlayer: Nessun target disponibile per %s"), *Unit->GetName());
+	UE_LOG(LogTemp, Warning, TEXT("HeuristicPlayer: Nessun target disponibile per %s"), *Unit->GetDisplayName());
 	return FIntPoint(-1, -1);
 }
 
@@ -794,7 +794,7 @@ FIntPoint AHeuristicPlayer::NextMoveTowardsTarget(AUnit* Unit, FIntPoint TargetP
 	// Se il path == 0 vuol dire che non è stato trovato nessun percorso
 	if (Path.Num() == 0)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: Nessun percorso trovato per %s verso (%d, %d)"), *Unit->GetName(), TargetPos.X, TargetPos.Y);
+		UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: Nessun percorso trovato per %s verso (%d, %d)"), *Unit->GetDisplayName(), TargetPos.X, TargetPos.Y);
 		return FIntPoint(-1, -1);
 	}
 
@@ -807,7 +807,7 @@ FIntPoint AHeuristicPlayer::NextMoveTowardsTarget(AUnit* Unit, FIntPoint TargetP
 	// Se dopo aver rimosso il primo elemento ho 0 vuol dire che sono già su TargetPos
 	if (Path.Num() == 0)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("HeuristicPlayer: %s e' già sul target"), *Unit->GetName());
+		UE_LOG(LogTemp, Warning, TEXT("HeuristicPlayer: %s e' già sul target"), *Unit->GetDisplayName());
 		// Faccio return di Start
 		return Start;
 	}
@@ -860,7 +860,7 @@ FIntPoint AHeuristicPlayer::NextMoveTowardsTarget(AUnit* Unit, FIntPoint TargetP
 		BestMove = ClosestReachable;
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("HeuristicPlayer: %s muove verso (%d,%d), target finale: (%d,%d)"), *Unit->GetName(), BestMove.X, BestMove.Y, TargetPos.X, TargetPos.Y);
+	UE_LOG(LogTemp, Log, TEXT("HeuristicPlayer: %s muove verso (%d,%d), target finale: (%d,%d)"), *Unit->GetDisplayName(), BestMove.X, BestMove.Y, TargetPos.X, TargetPos.Y);
 	// Return di BestMove calcolata ovvero la tile più lontana raggiungibile nel percorso calcolato verso TargetPos
 	return BestMove;
 }
@@ -947,7 +947,7 @@ void AHeuristicPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATB
 
 	// Per ogni unità in AiUnits mostro il suo range di movimento
 	AUnit* Unit = Units[CurrentIndex];
-	UE_LOG(LogTemp, Log, TEXT("HeuristicPlayer: Considero unità %s"), *Unit->GetName());
+	UE_LOG(LogTemp, Log, TEXT("HeuristicPlayer: Considero unità %s"), *Unit->GetDisplayName());
 	// Mostro range movimento
 	ShowMovementRange(Unit, GM->GField);
 	// Mostro icone di attacco
@@ -964,7 +964,7 @@ void AHeuristicPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATB
 			// Se la posizione del target rimane (-1,-1) vuol dire che non sto considerando nessun target
 			if (TargetPos.X == -1 || TargetPos.Y == -1)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("HeuristicPlayer: Nessun target per %s"), *Unit->GetName());
+				UE_LOG(LogTemp, Warning, TEXT("HeuristicPlayer: Nessun target per %s"), *Unit->GetDisplayName());
 
 				// Nascondo range movimento
 				HideMovementRange(GM->GField);
@@ -980,7 +980,7 @@ void AHeuristicPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATB
 			// Se la posizione del target rimane (-1,-1) vuol dire che non c'è nessuna mossa valida verso il target
 			if (NextMove.X == -1 || NextMove.Y == -1)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("HeuristicPlayer: Nessuna mossa valida per %s"), *Unit->GetName());
+				UE_LOG(LogTemp, Warning, TEXT("HeuristicPlayer: Nessuna mossa valida per %s"), *Unit->GetDisplayName());
 
 				// Nascondo range movimento
 				HideMovementRange(GM->GField);
@@ -1021,7 +1021,7 @@ void AHeuristicPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATB
 						GameInstance->AddMoveToHistory(MoveEntry);
 					}
 
-					GameInstance->SetTurnMessage(FString::Printf(TEXT("AI: %s si muove"), *Unit->GetName()));
+					GameInstance->SetTurnMessage(FString::Printf(TEXT("%s si muove"), *Unit->GetDisplayName()));
 				}
 			}
 
@@ -1067,7 +1067,7 @@ void AHeuristicPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATB
 					GameInstance->AddMoveToHistory(AttackEntry);
 				}
 
-				GameInstance->SetTurnMessage(FString::Printf(TEXT("AI: %s attacca!"), *Unit->GetName()));
+				GameInstance->SetTurnMessage(FString::Printf(TEXT("%s attacca!"), *Unit->GetDisplayName()));
 			}
 
 			// Aspetto 1 secondo e poi passo alla seconda unità
@@ -1119,7 +1119,7 @@ void AHeuristicPlayer::ShowAttackIndicators(AUnit* Unit, AGameField* GameField)
 						Indicator->SetTargetUnit(Enemy);
 						AttackIndicators.Add(Indicator);
 
-						UE_LOG(LogTemp, Log, TEXT("HeuristicPlayer: Icona attacco su %s"), *Enemy->GetName());
+						UE_LOG(LogTemp, Log, TEXT("HeuristicPlayer: Icona attacco su %s"), *Enemy->GetDisplayName());
 					}
 				}
 			}

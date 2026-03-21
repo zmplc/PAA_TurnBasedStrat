@@ -700,7 +700,7 @@ FIntPoint ARandomPlayer::DecideTarget(AUnit* Unit, AGameField* GameField)
 		FVector2D TowerPos = ClosestTower->GetGridPosition();
 
 		UE_LOG(LogTemp, Log, TEXT("RandomPlayer: %s priorita' TORRE a (%d, %d), distanza: %d (nemico: %d)"),
-			*Unit->GetName(),
+			*Unit->GetDisplayName(),
 			FMath::RoundToInt(TowerPos.X),
 			FMath::RoundToInt(TowerPos.Y),
 			DistanceToTower,
@@ -714,7 +714,7 @@ FIntPoint ARandomPlayer::DecideTarget(AUnit* Unit, AGameField* GameField)
 		FVector2D EnemyPos = ClosestEnemy->GetCurrentGridPosition();
 
 		UE_LOG(LogTemp, Log, TEXT("RandomPlayer: %s priorita' NEMICO a (%d, %d), distanza: %d (torre: %d)"),
-			*Unit->GetName(),
+			*Unit->GetDisplayName(),
 			FMath::RoundToInt(EnemyPos.X),
 			FMath::RoundToInt(EnemyPos.Y),
 			DistanceToEnemy,
@@ -724,7 +724,7 @@ FIntPoint ARandomPlayer::DecideTarget(AUnit* Unit, AGameField* GameField)
 	}
 
 	// Se non ci sono target disponibili faccio il return a (-1,-1)
-	UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: Nessun target disponibile per %s"), *Unit->GetName());
+	UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: Nessun target disponibile per %s"), *Unit->GetDisplayName());
 	return FIntPoint(-1, -1);
 }
 
@@ -797,7 +797,7 @@ FIntPoint ARandomPlayer::NextMoveTowardsTarget(AUnit* Unit, FIntPoint TargetPos,
 	// Se il path == 0 vuol dire che non è stato trovato nessun percorso
 	if (Path.Num() == 0)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: Nessun percorso trovato per %s verso (%d, %d)"), *Unit->GetName(), TargetPos.X, TargetPos.Y);
+		UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: Nessun percorso trovato per %s verso (%d, %d)"), *Unit->GetDisplayName(), TargetPos.X, TargetPos.Y);
 		return FIntPoint(-1, -1);
 	}
 
@@ -810,7 +810,7 @@ FIntPoint ARandomPlayer::NextMoveTowardsTarget(AUnit* Unit, FIntPoint TargetPos,
 	// Se dopo aver rimosso il primo elemento ho 0 vuol dire che sono già su TargetPos
 	if (Path.Num() == 0)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: %s e' già sul target"), *Unit->GetName());
+		UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: %s e' già sul target"), *Unit->GetDisplayName());
 		// Faccio return di Start
 		return Start;
 	}
@@ -864,7 +864,7 @@ FIntPoint ARandomPlayer::NextMoveTowardsTarget(AUnit* Unit, FIntPoint TargetPos,
 	}
 
 	UE_LOG(LogTemp, Log, TEXT("RandomPlayer: %s muove verso (%d, %d), target finale: (%d, %d)"),
-		*Unit->GetName(),
+		*Unit->GetDisplayName(),
 		BestMove.X, BestMove.Y,
 		TargetPos.X, TargetPos.Y);
 
@@ -957,7 +957,7 @@ void ARandomPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATBS_G
 
 	// Per ogni unità in AiUnits mostro il suo range di movimento
 	AUnit* Unit = Units[CurrentIndex];
-	UE_LOG(LogTemp, Log, TEXT("RandomPlayer: Considero unità %s"), *Unit->GetName());
+	UE_LOG(LogTemp, Log, TEXT("RandomPlayer: Considero unità %s"), *Unit->GetDisplayName());
 	// Mostro range movimento
 	ShowMovementRange(Unit, GM->GField);
 	// Mostro icone di attacco
@@ -974,7 +974,7 @@ void ARandomPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATBS_G
 			// Se la posizione del target rimane (-1,-1) vuol dire che non sto considerando nessun target
 			if (TargetPos.X == -1 || TargetPos.Y == -1)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: Nessun target per %s"), *Unit->GetName());
+				UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: Nessun target per %s"), *Unit->GetDisplayName());
 
 				// Nascondo range movimento
 				HideMovementRange(GM->GField);
@@ -990,7 +990,7 @@ void ARandomPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATBS_G
 			// Se la posizione del target rimane (-1,-1) vuol dire che non c'è nessuna mossa valida verso il target
 			if (NextMove.X == -1 || NextMove.Y == -1)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: Nessuna mossa valida per %s"), *Unit->GetName());
+				UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: Nessuna mossa valida per %s"), *Unit->GetDisplayName());
 
 				// Nascondo range movimento
 				HideMovementRange(GM->GField);
@@ -1031,7 +1031,7 @@ void ARandomPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATBS_G
 						GameInstance->AddMoveToHistory(MoveEntry);
 					}
 
-					GameInstance->SetTurnMessage(FString::Printf(TEXT("AI: %s si muove"), *Unit->GetName()));
+					GameInstance->SetTurnMessage(FString::Printf(TEXT("%s si muove"), *Unit->GetDisplayName()));
 				}
 			}
 
@@ -1077,12 +1077,12 @@ void ARandomPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATBS_G
 					GameInstance->AddMoveToHistory(AttackEntry);
 				}
 
-				GameInstance->SetTurnMessage(FString::Printf(TEXT("AI: %s attacca!"), *Unit->GetName()));
+				GameInstance->SetTurnMessage(FString::Printf(TEXT("%s attacca!"), *Unit->GetDisplayName()));
 			}
 			else if (NextMove == CurrentIntPos)
 			{
 				// Se sono già sul target, ovvero la torre, se non ci sono nemici vicini l'AI starebbe ferma, allora calcolo il nemico più vicino e faccio muovere l'AI verso di lui
-				UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: %s sul target ma nessun nemico in range, muovo verso nemico vicino"), *Unit->GetName());
+				UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: %s sul target ma nessun nemico in range, muovo verso nemico vicino"), *Unit->GetDisplayName());
 
 				// Calcolo il nemico più vicino chiamando FindClosestEnemy
 				AUnit* ClosestEnemy = FindClosestEnemy();
@@ -1112,7 +1112,7 @@ void ARandomPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATBS_G
 							GameInstance->AddMoveToHistory(MoveEntry);
 						}
 
-						GameInstance->SetTurnMessage(FString::Printf(TEXT("AI: %s si muove"), *Unit->GetName()));
+						GameInstance->SetTurnMessage(FString::Printf(TEXT("%s si muove"), *Unit->GetDisplayName()));
 					}
 				}
 			}
@@ -1166,7 +1166,7 @@ void ARandomPlayer::ShowAttackIndicators(AUnit* Unit, AGameField* GameField)
 						Indicator->SetTargetUnit(Enemy);
 						AttackIndicators.Add(Indicator);
 
-						UE_LOG(LogTemp, Log, TEXT("RandomPlayer: Icona attacco su %s"), *Enemy->GetName());
+						UE_LOG(LogTemp, Log, TEXT("RandomPlayer: Icona attacco su %s"), *Enemy->GetDisplayName());
 					}
 				}
 			}

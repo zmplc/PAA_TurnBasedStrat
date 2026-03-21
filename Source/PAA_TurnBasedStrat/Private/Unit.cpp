@@ -687,3 +687,36 @@ FString AUnit::GridPositionConverter(int32 X, int32 Y)
 	// Combino lette e numero per ottenere il formato A0
 	return FString::Printf(TEXT("%s%d"), *Letter, Number);
 }
+
+FString AUnit::GetDisplayName() const
+{
+	FString PlayerPrefix;
+	FString UnitTypeName;
+
+	// Salvo prefisso del giocatore 
+	if (OwnerPlayerID == 0)
+	{
+		PlayerPrefix = TEXT("HP");
+	}
+	else
+	{
+		PlayerPrefix = TEXT("AI");
+	}
+
+	// Salvo classe unità
+	if (UnitType == EUnitType::SNIPER)
+	{
+		UnitTypeName = TEXT("Sniper");
+	}
+	else if (UnitType == EUnitType::BRAWLER)
+	{
+		UnitTypeName = TEXT("Brawler");
+	}
+	else
+	{
+		UnitTypeName = TEXT("Unit");
+	}
+
+	// Faccio return del formato, esempio "HP Sniper"
+	return FString::Printf(TEXT("%s %s"), *PlayerPrefix, *UnitTypeName);
+}

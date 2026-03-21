@@ -265,7 +265,7 @@ void AHumanPlayer::SelectUnit(AUnit* Unit)
         ShowAttackIndicators(Unit);
     }
 
-    UE_LOG(LogTemp, Log, TEXT("HumanPlayer: Unita' selezionata - %s"), *Unit->GetName());
+    UE_LOG(LogTemp, Log, TEXT("%s selezionato"), *Unit->GetDisplayName());
 
     // Messaggi GameInstance
     if (GameInstance)
@@ -288,7 +288,7 @@ void AHumanPlayer::SelectUnit(AUnit* Unit)
             StatusMsg = TEXT("(pronta)");
         }
 
-        GameInstance->SetTurnMessage(FString::Printf(TEXT("Unita': %s %s"), *Unit->GetName(), *StatusMsg));
+        GameInstance->SetTurnMessage(FString::Printf(TEXT("%s %s"), *Unit->GetDisplayName(), *StatusMsg));
     }
 }
 
@@ -405,7 +405,7 @@ void AHumanPlayer::OnClick()
                         GameInstance->SetTurnMessage(TEXT("Brawler piazzato"));
                     }
 
-                    UE_LOG(LogTemp, Log, TEXT("%s piazzato in (%d, %d)"), *NewUnit->GetName(), TileX, TileY);
+                    UE_LOG(LogTemp, Log, TEXT("%s piazzato in (%d, %d)"), *NewUnit->GetDisplayName(), TileX, TileY);
 
                     // Reset ClassToSpawn
                     ClassToSpawn = nullptr;
@@ -697,7 +697,7 @@ void AHumanPlayer::ShowMovementRange(AUnit* Unit)
     // Nascondo range precedente se ce ne fosse ancora uno per evitare bug
     HideMovementRange();
 
-    UE_LOG(LogTemp, Log, TEXT("HumanPlayer: Range movimento per %s mostrato"), *Unit->GetName());
+    UE_LOG(LogTemp, Log, TEXT("HumanPlayer: Range movimento per %s mostrato"), *Unit->GetDisplayName());
 
     // Chiamo GetReachableTiles per ottenere le tile raggiungibili
     TArray<FIntPoint> ReachableTiles = Unit->GetReachableTiles(GM->GField);
@@ -845,7 +845,7 @@ void AHumanPlayer::ShowAttackIndicators(AUnit* Unit)
                         Indicator->SetTargetUnit(Enemy);
                         AttackIndicators.Add(Indicator);
 
-                        UE_LOG(LogTemp, Log, TEXT("HumanPlayer: Icona attacco su %s"), *Enemy->GetName());
+                        UE_LOG(LogTemp, Log, TEXT("HumanPlayer: Icona attacco su %s"), *Enemy->GetDisplayName());
                     }
                 }
                 else

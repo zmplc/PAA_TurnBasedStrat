@@ -189,4 +189,8 @@ public:
 	// Getter per sapere se l'unità è in movimento o no per interpolazione movimento
 	UFUNCTION(BlueprintCallable, Category = "Movement Interpolation")
 	bool IsMoving() const { return bIsMoving; }
+
+	// Funzione per mostrare il nome dell'unità relativa al giocatore
+	UFUNCTION(BlueprintCallable, Category = "Unit")
+	FString GetDisplayName() const;
 };
