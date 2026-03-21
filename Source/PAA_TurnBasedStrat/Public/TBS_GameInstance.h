@@ -166,6 +166,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Map Config")
 	void ResetMapConfig();
 
+	// Funzione reset UI
 	UFUNCTION(BlueprintCallable, Category = "UI")
 	void ResetGame();
+
+	// Funzione per bottone reset partita
+	UFUNCTION(BlueprintCallable, Category = "UI")
+	void ResetLevel();
 };

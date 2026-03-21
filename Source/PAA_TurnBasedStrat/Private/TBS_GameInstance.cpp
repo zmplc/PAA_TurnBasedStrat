@@ -2,6 +2,7 @@
 
 
 #include "TBS_GameInstance.h"
+#include "Kismet/GameplayStatics.h"
 
 UTBS_GameInstance::UTBS_GameInstance()
 {
@@ -144,5 +145,12 @@ void UTBS_GameInstance::ResetGame()
 	AiTowersControlled = 0;
 	ClearMoveHistory();
 	ResetMapConfig();
+}
+
+void UTBS_GameInstance::ResetLevel()
+{
+	ResetGame();
+	// Ritorno al MainMenu
+	UGameplayStatics::OpenLevel(this, FName("MainMenu"));
 }
 
