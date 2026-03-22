@@ -225,6 +225,15 @@ Per quanto riguarda l'audio, nel progetto ho utilizzato Sound Cue per gestire gl
 | `YellowHoveredButton`	  | Texture per stato Hovered per bottone giallo		  | `Content/Textures/UI/` |
 | `YellowPressedButton`	  | Texture per stato Pressed per bottone giallo		  | `Content/Textures/UI/` |
 
+### Docs
+
+Questa cartella contiene i file multimediali utilizzati per illustrare il progetto, come screenshot e gif demo del gameplay, presenti in questo README.
+
+| File				  | Descrizione											| Percorso |
+|---------------------|-----------------------------------------------------|----------|
+| `main_menu.png`	  | Immagine di copertina che mostra il menù principale | `docs/`  |
+| `gameplay_demo.gif` | Gif che mostra una demo del gameplay				| `docs/`  |
+
 ## Risorse utilizzate
 
 - [Documentazione ufficiale Unreal Engine 5.6](https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-5-6-documentation?application_version=5.6)
