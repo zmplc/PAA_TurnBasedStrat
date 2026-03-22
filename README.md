@@ -27,6 +27,7 @@ Questo progetto consiste nell'implementazione in Unreal Engine 5.6 di un gioco s
 - Nella schermata di configurazione della mappa, l'utente può scegliere i parametri dei 5 livelli della mappa (acqua, terreno, collina e montagne).
 - Quando viene selezionata un'unità, le unità nemiche che sono nel suo range di attacco vengono evidenziate con un'icona sopra di esse, in modo da fornire al giocatore un feedback visivo sulle possibili mosse da effettuare.
 - Per garantire zone di piazzamento iniziale sempre accessibili, specialmente nel caso in cui si scelga di generare una mappa con molte celle di livello 0 (acqua), se le celle di piazzamento iniziale risultano essere acqua, viene creato un collegamento di celle di livello 1 che connettono le zone di piazzamento iniziale alla prima cella camminabile più vicina.
+- Il contrattacco viene mostrato nello storico delle mosse anticipato dal prefisso _Counter_, in modo da distinguerlo dagli attacchi normali.
 
 ![Demo del Gameplay](docs/gameplay_demo.gif)
 
