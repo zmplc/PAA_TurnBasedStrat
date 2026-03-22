@@ -1065,18 +1065,25 @@ void AHeuristicPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATB
 					FString MoveHistoryTargetPosConverted = AUnit::GridPositionConverter(FMath::RoundToInt(MoveHistoryTargetPos.X), FMath::RoundToInt(MoveHistoryTargetPos.Y));
 					// Faccio il setup della stringa da passare poi allo storico delle mosse
 					FString AttackEntry;
+					AttackEntry = FString::Printf(TEXT("%s: %s %s %d"), *MoveHistoryPlayerID, *MoveHistoryUnitType, *MoveHistoryTargetPosConverted, Damage);
+
+					GameInstance->AddMoveToHistory(AttackEntry);
+
 					if (Unit->LastCounterDamage > 0)
 					{
-						// Inserisco anche il danno da contrattacco
-						AttackEntry = FString::Printf(TEXT("%s: %s %s %d (contrattacco: %d)"), *MoveHistoryPlayerID, *MoveHistoryUnitType, *MoveHistoryTargetPosConverted, Damage, Unit->LastCounterDamage);
+						// Definisco chi effettua il contrattacco (ovvero AI)
+						FString CounterPlayerID = TEXT("HP");
+						// Unità che effettua il contrattacco
+						FString CounterUnitType = (Target->UnitType == EUnitType::SNIPER) ? TEXT("S") : TEXT("B");
+						// Unità che riceve il contrattacco
+						FVector2D CounterTargetPos = Unit->GetCurrentGridPosition();
+						FString CounterTargetPosConverted = AUnit::GridPositionConverter(FMath::RoundToInt(CounterTargetPos.X), FMath::RoundToInt(CounterTargetPos.Y));
+						// Faccio il setup della stringa da passare poi allo storico delle mosse
+						FString CounterAttackEntry;
+						CounterAttackEntry = FString::Printf(TEXT("Counter: %s %s %s %d"), *CounterPlayerID, *CounterUnitType, *CounterTargetPosConverted, Unit->LastCounterDamage);
+
+						GameInstance->AddMoveToHistory(CounterAttackEntry);
 					}
-					else
-					{
-						// Senza danno contrattacco
-						AttackEntry = FString::Printf(TEXT("%s: %s %s %d"), *MoveHistoryPlayerID, *MoveHistoryUnitType, *MoveHistoryTargetPosConverted, Damage);
-					}
-					// Aggiungo la AttackEntry nell'array
-					GameInstance->AddMoveToHistory(AttackEntry);
 				}
 
 				GameInstance->SetTurnMessage(FString::Printf(TEXT("%s attacca!"), *Unit->GetDisplayName()));
