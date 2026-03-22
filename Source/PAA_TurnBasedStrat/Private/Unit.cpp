@@ -652,6 +652,8 @@ void AUnit::CounterAttack(AUnit* Attacker, const AGameField* GameField)
 
 	// Ora calcolo i danni del contrattacco: range da 1 a 3
 	int32 CounterDamage = FMath::RandRange(1, 3);
+	// Salvo il danno da contrattacco
+	Attacker->LastCounterDamage = CounterDamage;
 	// Applico il danno
 	Attacker->ApplyDamage(CounterDamage, nullptr, GameField);
 }

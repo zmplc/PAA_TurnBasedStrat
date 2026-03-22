@@ -120,6 +120,10 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Movement Interpolation")
 	float MovementDuration = 0.2f;
 
+	// Variabile per tenere traccia dell'ultimo danno subito dal contrattacco
+	UPROPERTY()
+	int32 LastCounterDamage = 0;
+
 	UFUNCTION(BlueprintCallable, Category = "Unit Position")
 	FVector2D GetCurrentGridPosition() const { return CurrentGridPosition; }
 

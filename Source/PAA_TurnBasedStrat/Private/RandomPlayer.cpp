@@ -1060,6 +1060,8 @@ void ARandomPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATBS_G
 						Target = Enemy;
 					}
 				}
+				// Resetto il danno da contrattacco precedente
+				Unit->LastCounterDamage = 0;
 				// Calcolo il danno e poi lo applico
 				int32 Damage = Unit->CalculateDamage();
 				Target->ApplyDamage(Damage, Unit, GM->GField);
@@ -1072,7 +1074,17 @@ void ARandomPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATBS_G
 					FVector2D MoveHistoryTargetPos = Target->GetCurrentGridPosition();
 					FString MoveHistoryTargetPosConverted = AUnit::GridPositionConverter(FMath::RoundToInt(MoveHistoryTargetPos.X), FMath::RoundToInt(MoveHistoryTargetPos.Y));
 					// Faccio il setup della stringa da passare poi allo storico delle mosse
-					FString AttackEntry = FString::Printf(TEXT("%s: %s %s %d"), *MoveHistoryPlayerID, *MoveHistoryUnitType, *MoveHistoryTargetPosConverted, Damage);
+					FString AttackEntry;
+					if (Unit->LastCounterDamage > 0)
+					{
+						// Inserisco anche il danno da contrattacco
+						AttackEntry = FString::Printf(TEXT("%s: %s %s %d (contrattacco: %d)"), *MoveHistoryPlayerID, *MoveHistoryUnitType, *MoveHistoryTargetPosConverted, Damage, Unit->LastCounterDamage);
+					}
+					else
+					{
+						// Senza danno contrattacco
+						AttackEntry = FString::Printf(TEXT("%s: %s %s %d"), *MoveHistoryPlayerID, *MoveHistoryUnitType, *MoveHistoryTargetPosConverted, Damage);
+					}
 					// Aggiungo la AttackEntry nell'array
 					GameInstance->AddMoveToHistory(AttackEntry);
 				}

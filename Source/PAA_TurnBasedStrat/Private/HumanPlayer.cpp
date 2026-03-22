@@ -547,6 +547,8 @@ void AHumanPlayer::OnClick()
             }
             if (SelectedUnit->CanAttack(HitUnit, GM->GField))
             {
+                // Resetto il danno da contrattacco precedente
+                SelectedUnit->LastCounterDamage = 0;
                 // Calcolo danno
                 int32 Damage = SelectedUnit->CalculateDamage();
                 // Applico il danno calcolato
@@ -562,7 +564,17 @@ void AHumanPlayer::OnClick()
                     FVector2D MoveHistoryTargetPos = HitUnit->GetCurrentGridPosition();
                     FString MoveHistoryTargetPosConverted = AUnit::GridPositionConverter(FMath::RoundToInt(MoveHistoryTargetPos.X), FMath::RoundToInt(MoveHistoryTargetPos.Y));
                     // Faccio il setup della stringa da passare poi allo storico delle mosse
-                    FString AttackEntry = FString::Printf(TEXT("%s: %s %s %d"), *MoveHistoryPlayerID, *MoveHistoryUnitType, *MoveHistoryTargetPosConverted, Damage);
+                    FString AttackEntry;
+                    if (SelectedUnit->LastCounterDamage > 0)
+                    {
+                        // Inserisco anche il danno da contrattacco
+                        AttackEntry = FString::Printf(TEXT("%s: %s %s %d (contrattacco: %d)"), *MoveHistoryPlayerID, *MoveHistoryUnitType, *MoveHistoryTargetPosConverted, Damage, SelectedUnit->LastCounterDamage);
+                    }
+                    else
+                    {
+                        // Senza danno contrattacco
+                        AttackEntry = FString::Printf(TEXT("%s: %s %s %d"), *MoveHistoryPlayerID, *MoveHistoryUnitType, *MoveHistoryTargetPosConverted, Damage);
+                    }
                     // Aggiungo la AttackEntry nell'array
                     GameInstance->AddMoveToHistory(AttackEntry);
                 }
