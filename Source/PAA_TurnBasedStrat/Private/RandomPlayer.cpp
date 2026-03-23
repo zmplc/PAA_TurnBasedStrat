@@ -1035,118 +1035,124 @@ void ARandomPlayer::ProcessUnit(TArray<AUnit*> Units, int32 CurrentIndex, ATBS_G
 				}
 			}
 
-			// Se un nemico è in range l'AI lo attacca
-			// Salvo in una rray i nemici da attaccare, controllo se è attaccabile con la funzione CanAttack
-			TArray<AUnit*> EnemiesInRange;
-			for (TActorIterator<AUnit> It(GetWorld()); It; ++It)
-			{
-				AUnit* Enemy = *It;
-				if (Enemy && Enemy->OwnerPlayerID != PlayerID && Enemy->IsAlive())
+			// Timer di 1 secondo per aspettare la fine del movimento prima dell'attacco
+			FTimerHandle AttackWaitTimer;
+			GetWorld()->GetTimerManager().SetTimer(AttackWaitTimer, [this, Unit, Units, CurrentIndex, GM, NextMove, CurrentIntPos]()
 				{
-					if (Unit->CanAttack(Enemy, GM->GField))
+					if (!GM || GM->bGameEnded || !Unit->IsAlive()) return;
+
+					// Se un nemico è in range l'AI lo attacca
+					// Salvo in una rray i nemici da attaccare, controllo se è attaccabile con la funzione CanAttack
+					TArray<AUnit*> EnemiesInRange;
+					for (TActorIterator<AUnit> It(GetWorld()); It; ++It)
 					{
-						EnemiesInRange.Add(Enemy);
+						AUnit* Enemy = *It;
+						if (Enemy && Enemy->OwnerPlayerID != PlayerID && Enemy->IsAlive())
+						{
+							if (Unit->CanAttack(Enemy, GM->GField))
+							{
+								EnemiesInRange.Add(Enemy);
+							}
+						}
 					}
-				}
-			}
-			if (EnemiesInRange.Num() > 0)
-			{
-				// Attacco il nemico con meno punti vita
-				AUnit* Target = EnemiesInRange[0];
-				for (AUnit* Enemy : EnemiesInRange)
-				{
-					if (Enemy->CurrentHealth < Target->CurrentHealth)
+					if (EnemiesInRange.Num() > 0)
 					{
-						Target = Enemy;
-					}
-				}
-				// Resetto il danno da contrattacco precedente
-				Unit->LastCounterDamage = 0;
-				// Calcolo il danno e poi lo applico
-				int32 Damage = Unit->CalculateDamage();
-				Target->ApplyDamage(Damage, Unit, GM->GField);
+						// Attacco il nemico con meno punti vita
+						AUnit* Target = EnemiesInRange[0];
+						for (AUnit* Enemy : EnemiesInRange)
+						{
+							if (Enemy->CurrentHealth < Target->CurrentHealth)
+							{
+								Target = Enemy;
+							}
+						}
+						// Resetto il danno da contrattacco precedente
+						Unit->LastCounterDamage = 0;
+						// Calcolo il danno e poi lo applico
+						int32 Damage = Unit->CalculateDamage();
+						Target->ApplyDamage(Damage, Unit, GM->GField);
 
-				// Registro la mossa nello storico (per l'attacco la entry la chiamo AttackEntry così so distinguere movimento e attacco se fatti nello stesso turno)
-				if (GameInstance)
-				{
-					FString MoveHistoryPlayerID = TEXT("AI");
-					FString MoveHistoryUnitType = (Unit->UnitType == EUnitType::SNIPER) ? TEXT("S") : TEXT("B");
-					FVector2D MoveHistoryTargetPos = Target->GetCurrentGridPosition();
-					FString MoveHistoryTargetPosConverted = AUnit::GridPositionConverter(FMath::RoundToInt(MoveHistoryTargetPos.X), FMath::RoundToInt(MoveHistoryTargetPos.Y));
-					// Faccio il setup della stringa da passare poi allo storico delle mosse
-					FString AttackEntry;
-					AttackEntry = FString::Printf(TEXT("%s: %s %s %d"), *MoveHistoryPlayerID, *MoveHistoryUnitType, *MoveHistoryTargetPosConverted, Damage);
-
-					GameInstance->AddMoveToHistory(AttackEntry);
-
-					if (Unit->LastCounterDamage > 0)
-					{
-						// Definisco chi effettua il contrattacco (ovvero AI)
-						FString CounterPlayerID = TEXT("HP");
-						// Unità che effettua il contrattacco
-						FString CounterUnitType = (Target->UnitType == EUnitType::SNIPER) ? TEXT("S") : TEXT("B");
-						// Unità che riceve il contrattacco
-						FVector2D CounterTargetPos = Unit->GetCurrentGridPosition();
-						FString CounterTargetPosConverted = AUnit::GridPositionConverter(FMath::RoundToInt(CounterTargetPos.X), FMath::RoundToInt(CounterTargetPos.Y));
-						// Faccio il setup della stringa da passare poi allo storico delle mosse
-						FString CounterAttackEntry;
-						CounterAttackEntry = FString::Printf(TEXT("Counter: %s %s %s %d"), *CounterPlayerID, *CounterUnitType, *CounterTargetPosConverted, Unit->LastCounterDamage);
-
-						GameInstance->AddMoveToHistory(CounterAttackEntry);
-					}
-				}
-
-				GameInstance->SetTurnMessage(FString::Printf(TEXT("%s attacca!"), *Unit->GetDisplayName()));
-			}
-			else if (NextMove == CurrentIntPos)
-			{
-				// Se sono già sul target, ovvero la torre, se non ci sono nemici vicini l'AI starebbe ferma, allora calcolo il nemico più vicino e faccio muovere l'AI verso di lui
-				UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: %s sul target ma nessun nemico in range, muovo verso nemico vicino"), *Unit->GetDisplayName());
-
-				// Calcolo il nemico più vicino chiamando FindClosestEnemy
-				AUnit* ClosestEnemy = FindClosestEnemy();
-				if (ClosestEnemy)
-				{
-					FVector2D EnemyPos = ClosestEnemy->GetCurrentGridPosition();
-					FIntPoint EnemyTarget(FMath::RoundToInt(EnemyPos.X), FMath::RoundToInt(EnemyPos.Y));
-					// Definisco FallbackMove che rappresenta la prossima mossa per arrivare al nemico più vicino usando NextMoveTowardsTarget
-					FIntPoint FallbackMove = NextMoveTowardsTarget(Unit, EnemyTarget, GM->GField);
-					// Check per FallbackMove: deve essere diverso dalla posizione corrente dell'unità e deve essere nel range di movimento dell'unità
-					if (FallbackMove != CurrentIntPos && Unit->CanMoveTo(FallbackMove.X, FallbackMove.Y, GM->GField))
-					{
-						// Muovo l'unità
-						FVector2D OldPos = Unit->GetCurrentGridPosition();
-						Unit->MoveTo(FallbackMove.X, FallbackMove.Y, GM->GField);
-
-						// Registro la mossa nello storico
+						// Registro la mossa nello storico (per l'attacco la entry la chiamo AttackEntry così so distinguere movimento e attacco se fatti nello stesso turno)
 						if (GameInstance)
 						{
 							FString MoveHistoryPlayerID = TEXT("AI");
 							FString MoveHistoryUnitType = (Unit->UnitType == EUnitType::SNIPER) ? TEXT("S") : TEXT("B");
-							FString MoveHistoryFromPos = AUnit::GridPositionConverter(FMath::RoundToInt(OldPos.X), FMath::RoundToInt(OldPos.Y));
-							FString MoveHistoryToPos = AUnit::GridPositionConverter(FallbackMove.X, FallbackMove.Y);
+							FVector2D MoveHistoryTargetPos = Target->GetCurrentGridPosition();
+							FString MoveHistoryTargetPosConverted = AUnit::GridPositionConverter(FMath::RoundToInt(MoveHistoryTargetPos.X), FMath::RoundToInt(MoveHistoryTargetPos.Y));
 							// Faccio il setup della stringa da passare poi allo storico delle mosse
-							FString MoveEntry = FString::Printf(TEXT("%s: %s %s -> %s"), *MoveHistoryPlayerID, *MoveHistoryUnitType, *MoveHistoryFromPos, *MoveHistoryToPos);
-							// Aggiungo la AttackEntry nell'array
-							GameInstance->AddMoveToHistory(MoveEntry);
+							FString AttackEntry;
+							AttackEntry = FString::Printf(TEXT("%s: %s %s %d"), *MoveHistoryPlayerID, *MoveHistoryUnitType, *MoveHistoryTargetPosConverted, Damage);
+
+							GameInstance->AddMoveToHistory(AttackEntry);
+
+							if (Unit->LastCounterDamage > 0)
+							{
+								// Definisco chi effettua il contrattacco (ovvero AI)
+								FString CounterPlayerID = TEXT("HP");
+								// Unità che effettua il contrattacco
+								FString CounterUnitType = (Target->UnitType == EUnitType::SNIPER) ? TEXT("S") : TEXT("B");
+								// Unità che riceve il contrattacco
+								FVector2D CounterTargetPos = Unit->GetCurrentGridPosition();
+								FString CounterTargetPosConverted = AUnit::GridPositionConverter(FMath::RoundToInt(CounterTargetPos.X), FMath::RoundToInt(CounterTargetPos.Y));
+								// Faccio il setup della stringa da passare poi allo storico delle mosse
+								FString CounterAttackEntry;
+								CounterAttackEntry = FString::Printf(TEXT("Counter: %s %s %s %d"), *CounterPlayerID, *CounterUnitType, *CounterTargetPosConverted, Unit->LastCounterDamage);
+
+								GameInstance->AddMoveToHistory(CounterAttackEntry);
+							}
 						}
 
-						GameInstance->SetTurnMessage(FString::Printf(TEXT("%s si muove"), *Unit->GetDisplayName()));
+						GameInstance->SetTurnMessage(FString::Printf(TEXT("%s attacca!"), *Unit->GetDisplayName()));
 					}
-				}
-			}
+					else if (NextMove == CurrentIntPos)
+					{
+						// Se sono già sul target, ovvero la torre, se non ci sono nemici vicini l'AI starebbe ferma, allora calcolo il nemico più vicino e faccio muovere l'AI verso di lui
+						UE_LOG(LogTemp, Warning, TEXT("RandomPlayer: %s sul target ma nessun nemico in range, muovo verso nemico vicino"), *Unit->GetDisplayName());
 
-			// Aspetto 1 secondo e poi passo alla seconda unità
-			FTimerHandle NextUnitTimer;
-			GetWorld()->GetTimerManager().SetTimer(NextUnitTimer, [this, Units, CurrentIndex, GM]()
-				{
-					// Se la partita è finita o non c'è il gamemode return
-					if (!GM || GM->bGameEnded) return;
-					HideMovementRange(GM->GField);
-					HideAttackIndicators(GM->GField);
-					ProcessUnit(Units, CurrentIndex + 1, GM);
+						// Calcolo il nemico più vicino chiamando FindClosestEnemy
+						AUnit* ClosestEnemy = FindClosestEnemy();
+						if (ClosestEnemy)
+						{
+							FVector2D EnemyPos = ClosestEnemy->GetCurrentGridPosition();
+							FIntPoint EnemyTarget(FMath::RoundToInt(EnemyPos.X), FMath::RoundToInt(EnemyPos.Y));
+							// Definisco FallbackMove che rappresenta la prossima mossa per arrivare al nemico più vicino usando NextMoveTowardsTarget
+							FIntPoint FallbackMove = NextMoveTowardsTarget(Unit, EnemyTarget, GM->GField);
+							// Check per FallbackMove: deve essere diverso dalla posizione corrente dell'unità e deve essere nel range di movimento dell'unità
+							if (FallbackMove != CurrentIntPos && Unit->CanMoveTo(FallbackMove.X, FallbackMove.Y, GM->GField))
+							{
+								// Muovo l'unità
+								FVector2D OldPos = Unit->GetCurrentGridPosition();
+								Unit->MoveTo(FallbackMove.X, FallbackMove.Y, GM->GField);
+
+								// Registro la mossa nello storico
+								if (GameInstance)
+								{
+									FString MoveHistoryPlayerID = TEXT("AI");
+									FString MoveHistoryUnitType = (Unit->UnitType == EUnitType::SNIPER) ? TEXT("S") : TEXT("B");
+									FString MoveHistoryFromPos = AUnit::GridPositionConverter(FMath::RoundToInt(OldPos.X), FMath::RoundToInt(OldPos.Y));
+									FString MoveHistoryToPos = AUnit::GridPositionConverter(FallbackMove.X, FallbackMove.Y);
+									// Faccio il setup della stringa da passare poi allo storico delle mosse
+									FString MoveEntry = FString::Printf(TEXT("%s: %s %s -> %s"), *MoveHistoryPlayerID, *MoveHistoryUnitType, *MoveHistoryFromPos, *MoveHistoryToPos);
+									// Aggiungo la AttackEntry nell'array
+									GameInstance->AddMoveToHistory(MoveEntry);
+								}
+
+								GameInstance->SetTurnMessage(FString::Printf(TEXT("%s si muove"), *Unit->GetDisplayName()));
+							}
+						}
+					}
+
+					// Aspetto 1 secondo e poi passo alla seconda unità
+					FTimerHandle NextUnitTimer;
+					GetWorld()->GetTimerManager().SetTimer(NextUnitTimer, [this, Units, CurrentIndex, GM]()
+						{
+							// Se la partita è finita o non c'è il gamemode return
+							if (!GM || GM->bGameEnded) return;
+							HideMovementRange(GM->GField);
+							HideAttackIndicators(GM->GField);
+							ProcessUnit(Units, CurrentIndex + 1, GM);
+						}, 1.0f, false);
 				}, 1.0f, false);
-
 		}, 1.0f, false);
 }
 
