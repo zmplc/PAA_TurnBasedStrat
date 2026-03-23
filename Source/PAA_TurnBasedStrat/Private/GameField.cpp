@@ -544,7 +544,7 @@ ATile* AGameField::SpawnTile(int32 X, int32 Y, int32 HeightLevel)
 	const float Step = TileSpacing + CellPadding;
 
 	const FVector SpawnLocation(
-		X * Step,
+		(GridSizeX - 1 - X) * Step,
 		Y * Step,
 		0.f
 	);
